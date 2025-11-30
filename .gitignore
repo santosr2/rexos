@@ -1,0 +1,43 @@
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Build artifacts
+build/
+dist/
+*.img
+*.zip
+*.7z
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+coverage/
+
+# Buildroot
+buildroot/output/
+buildroot/dl/
+
+# Device-specific
+*.dtb
+*.bin
+
+# Credentials
+*.pem
+*.key
+secrets/
