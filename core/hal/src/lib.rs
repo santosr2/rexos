@@ -32,11 +32,11 @@ pub mod input;
 pub mod audio;
 pub mod power;
 
-pub use device::{Device, DeviceProfile, DeviceError};
-pub use display::{Display, DisplayConfig};
-pub use input::{InputManager, Button, AnalogStick};
-pub use audio::{AudioManager, AudioConfig};
-pub use power::{PowerManager, BatteryInfo};
+pub use device::{Device, DeviceProfile, DeviceError, SystemInfo, DisplaySpec};
+pub use display::{Display, DisplayConfig, Rotation, BacklightInfo};
+pub use input::{InputManager, Button, AnalogStick, InputState, InputDevice, InputEvent};
+pub use audio::{AudioManager, AudioConfig, HeadphoneState, AudioProfile};
+pub use power::{PowerManager, PowerConfig, BatteryInfo, BatteryStatus, BatteryHealth, CpuGovernor};
 
 /// HAL Result type
 pub type Result<T> = std::result::Result<T, DeviceError>;

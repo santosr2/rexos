@@ -1,14 +1,11 @@
 [workspace]
 members = [
     "core/hal",
-    # Uncomment as modules are created:
-    # "core/input",
-    # "core/display",
-    # "core/audio",
-    # "core/storage",
-    # "core/power",
-    # "services/library",
-    # "services/emulator",
+    "core/storage",
+    "core/config",
+    "services/emulator",
+    "services/library",
+    # Future modules:
     # "services/update",
     # "services/network",
 ]

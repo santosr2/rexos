@@ -18,6 +18,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 ### Core Components
 
 **Language Distribution:**
+
 - **Rust (60%)**: Core system, hardware abstraction, game library manager
 - **Shell (30%)**: System scripts, updates, maintenance tools  
 - **C (10%)**: Emulator bridges, hardware-specific optimizations
@@ -34,6 +35,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 ## ✨ Key Features
 
 ### Phase 1 (MVP)
+
 - [x] Project structure
 - [ ] Boot system (< 10 second boot)
 - [ ] Hardware abstraction layer (HAL) in Rust
@@ -47,6 +49,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 - [ ] Basic settings UI
 
 ### Phase 2 (Enhanced Features)
+
 - [ ] WiFi/Bluetooth management
 - [ ] Over-the-air (OTA) updates
 - [ ] Cloud save sync
@@ -58,6 +61,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 - [ ] Sleep/suspend optimization
 
 ### Phase 3 (Advanced Features)
+
 - [ ] Port management system (similar to PortMaster)
 - [ ] Shader management
 - [ ] Netplay support
@@ -71,7 +75,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 
 ## 📁 Project Structure
 
-```
+```text
 rexos/
 ├── core/                 # Rust core system components
 │   ├── hal/             # Hardware Abstraction Layer
@@ -111,10 +115,12 @@ rexos/
 ## 🎯 Supported Devices (Planned)
 
 ### Initial Target
+
 - **Anbernic RG353M/V/VS**: RK3566 chipset
 - **Anbernic RG35XX series**: ARM-based devices
 
 ### Future Support
+
 - Anbernic RG351 series
 - Anbernic RG552
 - Other similar ARM-based handhelds
@@ -122,6 +128,7 @@ rexos/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 ```bash
 # Rust toolchain
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -135,6 +142,7 @@ rustup target add armv7-unknown-linux-gnueabihf
 ```
 
 ### Building (Coming Soon)
+
 ```bash
 # Clone repository
 git clone https://github.com/santosr2/rexos.git
@@ -151,6 +159,7 @@ cargo build --release --target aarch64-unknown-linux-gnu
 ## 🤝 Contributing
 
 We welcome contributions! Areas where help is needed:
+
 - Rust systems programming
 - Linux kernel customization
 - Hardware driver development
@@ -169,6 +178,7 @@ We welcome contributions! Areas where help is needed:
 ## 🔧 Technical Decisions
 
 ### Why Rust?
+
 - Memory safety without garbage collection
 - Zero-cost abstractions
 - Excellent embedded systems support
@@ -176,6 +186,7 @@ We welcome contributions! Areas where help is needed:
 - Growing embedded/gaming community
 
 ### Why Hybrid Approach?
+
 - Reuse proven shell script patterns from ArkOS
 - Leverage existing C-based emulators
 - Gradual migration path
