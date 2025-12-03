@@ -42,4 +42,6 @@ buildroot/dl/
 *.key
 secrets/
 
+!scripts/build
+
 testing.md

@@ -31,13 +31,14 @@ pub struct SignatureVerifier {
 impl SignatureVerifier {
     /// Create verifier from hex-encoded public key
     pub fn from_hex(hex_key: &str) -> Result<Self, VerificationError> {
-        let bytes = hex::decode(hex_key)
-            .map_err(|e| VerificationError::InvalidPublicKey(e.to_string()))?;
+        let bytes =
+            hex::decode(hex_key).map_err(|e| VerificationError::InvalidPublicKey(e.to_string()))?;
 
         if bytes.len() != 32 {
-            return Err(VerificationError::InvalidPublicKey(
-                format!("Key must be 32 bytes, got {}", bytes.len())
-            ));
+            return Err(VerificationError::InvalidPublicKey(format!(
+                "Key must be 32 bytes, got {}",
+                bytes.len()
+            )));
         }
 
         let mut key_bytes = [0u8; 32];
@@ -63,9 +64,10 @@ impl SignatureVerifier {
             .map_err(|e| VerificationError::InvalidSignature(e.to_string()))?;
 
         if sig_bytes.len() != 64 {
-            return Err(VerificationError::InvalidSignature(
-                format!("Signature must be 64 bytes, got {}", sig_bytes.len())
-            ));
+            return Err(VerificationError::InvalidSignature(format!(
+                "Signature must be 64 bytes, got {}",
+                sig_bytes.len()
+            )));
         }
 
         let mut sig_array = [0u8; 64];
@@ -87,9 +89,10 @@ impl SignatureVerifier {
             .map_err(|e| VerificationError::InvalidSignature(e.to_string()))?;
 
         if sig_bytes.len() != 64 {
-            return Err(VerificationError::InvalidSignature(
-                format!("Signature must be 64 bytes, got {}", sig_bytes.len())
-            ));
+            return Err(VerificationError::InvalidSignature(format!(
+                "Signature must be 64 bytes, got {}",
+                sig_bytes.len()
+            )));
         }
 
         let mut sig_array = [0u8; 64];
@@ -104,12 +107,14 @@ impl SignatureVerifier {
 }
 
 /// Verifies file hashes
+#[allow(dead_code)]
 pub struct HashVerifier;
 
+#[allow(dead_code)]
 impl HashVerifier {
     /// Compute SHA256 hash of a file
     pub fn sha256_file(path: &Path) -> Result<String, VerificationError> {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
 
         let mut file = File::open(path)?;
         let mut hasher = Sha256::new();
@@ -128,7 +133,7 @@ impl HashVerifier {
 
     /// Compute SHA256 hash of data
     pub fn sha256_data(data: &[u8]) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
 
         let mut hasher = Sha256::new();
         hasher.update(data);
@@ -165,11 +170,13 @@ impl HashVerifier {
 }
 
 /// Certificate chain verification (for future HTTPS pinning)
+#[allow(dead_code)]
 pub struct CertificateVerifier {
     /// Pinned certificate hashes
     pinned_certs: Vec<String>,
 }
 
+#[allow(dead_code)]
 impl CertificateVerifier {
     /// Create with pinned certificate hashes
     pub fn new(pinned_certs: Vec<String>) -> Self {
@@ -184,18 +191,18 @@ impl CertificateVerifier {
     /// Add RexOS update server certificate
     pub fn with_rexos_cert(mut self) -> Self {
         // SHA256 of RexOS update server certificate (placeholder)
-        self.pinned_certs.push(
-            "0000000000000000000000000000000000000000000000000000000000000000".to_string()
-        );
+        self.pinned_certs
+            .push("0000000000000000000000000000000000000000000000000000000000000000".to_string());
         self
     }
 }
 
 /// Generate a signing keypair (for build tools)
+#[allow(dead_code)]
 pub fn generate_keypair() -> (String, String) {
     use ed25519_dalek::SigningKey;
-    use rand::rngs::OsRng;
     use rand::RngCore;
+    use rand::rngs::OsRng;
 
     let mut secret_key_bytes = [0u8; 32];
     OsRng.fill_bytes(&mut secret_key_bytes);
@@ -210,6 +217,7 @@ pub fn generate_keypair() -> (String, String) {
 }
 
 /// Sign data with a private key (for build tools)
+#[allow(dead_code)]
 pub fn sign_data(data: &[u8], private_key_hex: &str) -> Result<String, VerificationError> {
     use ed25519_dalek::{Signer, SigningKey};
 
@@ -217,9 +225,10 @@ pub fn sign_data(data: &[u8], private_key_hex: &str) -> Result<String, Verificat
         .map_err(|e| VerificationError::InvalidPublicKey(e.to_string()))?;
 
     if key_bytes.len() != 32 {
-        return Err(VerificationError::InvalidPublicKey(
-            format!("Key must be 32 bytes, got {}", key_bytes.len())
-        ));
+        return Err(VerificationError::InvalidPublicKey(format!(
+            "Key must be 32 bytes, got {}",
+            key_bytes.len()
+        )));
     }
 
     let mut key_array = [0u8; 32];

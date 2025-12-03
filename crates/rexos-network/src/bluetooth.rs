@@ -1,9 +1,7 @@
 //! Bluetooth management using bluetoothctl
 
 use crate::NetworkError;
-use std::collections::HashMap;
-use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader, Write};
+use std::process::Command;
 
 /// Bluetooth device information
 #[derive(Debug, Clone)]
@@ -94,6 +92,7 @@ pub enum PairingState {
 
 /// Manages Bluetooth connections
 pub struct BluetoothManager {
+    #[allow(dead_code)]
     interface: String,
     available: bool,
 }
@@ -114,7 +113,7 @@ impl BluetoothManager {
         Command::new("bluetoothctl")
             .arg("--version")
             .output()
-            .map_or(false, |o| o.status.success())
+            .is_ok_and(|o| o.status.success())
     }
 
     /// Check if Bluetooth is available
@@ -139,7 +138,7 @@ impl BluetoothManager {
     /// Check if Bluetooth is powered on
     pub fn is_powered(&self) -> bool {
         self.bluetoothctl(&["show"])
-            .map_or(false, |output| output.contains("Powered: yes"))
+            .is_ok_and(|output| output.contains("Powered: yes"))
     }
 
     /// Start scanning for devices
@@ -249,15 +248,15 @@ impl BluetoothManager {
             } else if line.starts_with("Trusted:") {
                 device.trusted = line.contains("yes");
             } else if line.starts_with("Class:") {
-                if let Some(class_str) = line.split_whitespace().last() {
-                    if let Ok(class) = u32::from_str_radix(class_str.trim_start_matches("0x"), 16) {
-                        device.device_type = BluetoothDeviceType::from_class(class);
-                    }
+                if let Some(class_str) = line.split_whitespace().next_back()
+                    && let Ok(class) = u32::from_str_radix(class_str.trim_start_matches("0x"), 16)
+                {
+                    device.device_type = BluetoothDeviceType::from_class(class);
                 }
-            } else if line.starts_with("RSSI:") {
-                if let Some(rssi_str) = line.split_whitespace().last() {
-                    device.rssi = rssi_str.parse().ok();
-                }
+            } else if line.starts_with("RSSI:")
+                && let Some(rssi_str) = line.split_whitespace().next_back()
+            {
+                device.rssi = rssi_str.parse().ok();
             }
         }
 
@@ -357,9 +356,7 @@ impl BluetoothManager {
 
     /// Run bluetoothctl command
     fn bluetoothctl(&self, args: &[&str]) -> Result<String, NetworkError> {
-        let output = Command::new("bluetoothctl")
-            .args(args)
-            .output()?;
+        let output = Command::new("bluetoothctl").args(args).output()?;
 
         // bluetoothctl often returns success even on failure, check output
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();

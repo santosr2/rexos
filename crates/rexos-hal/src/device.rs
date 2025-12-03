@@ -148,11 +148,14 @@ impl Device {
             .unwrap_or_default();
 
         // Read serial number
-        let serial = Self::read_device_tree_string("/sys/firmware/devicetree/base/serial-number").ok();
+        let serial =
+            Self::read_device_tree_string("/sys/firmware/devicetree/base/serial-number").ok();
 
         // Read CPU info
         let cpu_info = Self::parse_cpuinfo();
-        let cpu_model = cpu_info.get("model name").cloned()
+        let cpu_model = cpu_info
+            .get("model name")
+            .cloned()
             .or_else(|| cpu_info.get("Hardware").cloned());
 
         // Count CPUs
@@ -216,10 +219,10 @@ impl Device {
         let online_path = "/sys/devices/system/cpu/online";
         if let Ok(contents) = fs::read_to_string(online_path) {
             // Format is like "0-3" for 4 cores
-            if let Some(range) = contents.trim().split('-').last() {
-                if let Ok(max) = range.parse::<u32>() {
-                    return max + 1;
-                }
+            if let Some(range) = contents.trim().split('-').next_back()
+                && let Ok(max) = range.parse::<u32>()
+            {
+                return max + 1;
             }
         }
 
@@ -229,14 +232,12 @@ impl Device {
             return entries
                 .filter_map(|e| e.ok())
                 .filter(|e| {
-                    e.file_name()
-                        .to_string_lossy()
-                        .starts_with("cpu")
+                    e.file_name().to_string_lossy().starts_with("cpu")
                         && e.file_name()
                             .to_string_lossy()
                             .chars()
                             .nth(3)
-                            .map_or(false, |c| c.is_ascii_digit())
+                            .is_some_and(|c| c.is_ascii_digit())
                 })
                 .count() as u32;
         }
@@ -250,10 +251,10 @@ impl Device {
         for line in contents.lines() {
             if line.starts_with("MemTotal:") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.len() >= 2 {
-                    if let Ok(kb) = parts[1].parse::<u64>() {
-                        return Ok(kb);
-                    }
+                if parts.len() >= 2
+                    && let Ok(kb) = parts[1].parse::<u64>()
+                {
+                    return Ok(kb);
                 }
             }
         }
@@ -334,10 +335,13 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 2,
             battery_capacity: 3500,
             quirks: vec![],
@@ -357,10 +361,13 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 2,
             battery_capacity: 4100,
             quirks: vec!["square_display".into()],
@@ -380,10 +387,13 @@ impl Device {
                 format: "RGB888".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 2,
             battery_capacity: 3500,
             quirks: vec!["oled_display".into()],
@@ -408,10 +418,13 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: if variant == "RG351V" { 1 } else { 2 },
             battery_capacity: 3500,
             quirks: vec![],
@@ -431,10 +444,12 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "r1", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "r1", "start", "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 0,
             battery_capacity: 2600,
             quirks: vec!["no_analog".into(), "no_l2r2".into()],
@@ -454,10 +469,13 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 2,
             battery_capacity: 3500,
             quirks: vec!["generic".into()],
@@ -477,10 +495,13 @@ impl Device {
                 format: "RGB565".into(),
                 refresh_rate: 60,
             },
-            buttons: ["up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start", "select"]
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            buttons: [
+                "up", "down", "left", "right", "a", "b", "x", "y", "l1", "l2", "r1", "r2", "start",
+                "select",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             analog_sticks: 2,
             battery_capacity: 3500,
             quirks: vec!["generic".into()],

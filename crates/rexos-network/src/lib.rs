@@ -12,13 +12,13 @@
 //! - Bluetooth device discovery and pairing
 //! - Bluetooth audio (A2DP) for wireless controllers
 
-mod wifi;
 mod bluetooth;
 mod hotspot;
+mod wifi;
 
-pub use wifi::{WifiManager, WifiNetwork, WifiStatus, WifiSecurity, ConnectionState};
-pub use bluetooth::{BluetoothManager, BluetoothDevice, BluetoothDeviceType, PairingState};
-pub use hotspot::{HotspotManager, HotspotConfig};
+pub use bluetooth::{BluetoothDevice, BluetoothDeviceType, BluetoothManager, PairingState};
+pub use hotspot::{HotspotConfig, HotspotManager};
+pub use wifi::{ConnectionState, WifiManager, WifiNetwork, WifiSecurity, WifiStatus};
 
 use std::path::PathBuf;
 use thiserror::Error;

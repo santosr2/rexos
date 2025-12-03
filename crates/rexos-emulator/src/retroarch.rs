@@ -55,14 +55,14 @@ impl RetroArchLauncher {
             let entry = entry?;
             let path = entry.path();
 
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_libretro.so") {
-                    let core_name = name.trim_end_matches("_libretro.so").to_string();
+            if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                && name.ends_with("_libretro.so")
+            {
+                let core_name = name.trim_end_matches("_libretro.so").to_string();
 
-                    // Try to load .info file
-                    let info = self.load_core_info(&core_name, &path);
-                    self.core_info.insert(core_name, info);
-                }
+                // Try to load .info file
+                let info = self.load_core_info(&core_name, &path);
+                self.core_info.insert(core_name, info);
             }
         }
 
@@ -73,7 +73,8 @@ impl RetroArchLauncher {
     /// Load core info from .info file or create default
     fn load_core_info(&self, name: &str, lib_path: &Path) -> CoreInfo {
         // Check for .info file in info directory
-        let info_path = self.config_dir
+        let info_path = self
+            .config_dir
             .join("cores")
             .join(format!("{}_libretro.info", name));
 
@@ -142,7 +143,9 @@ impl RetroArchLauncher {
 
     /// Get path to core-specific config override
     pub fn core_config_path(&self, core_name: &str) -> PathBuf {
-        self.config_dir.join("config").join(format!("{}.cfg", core_name))
+        self.config_dir
+            .join("config")
+            .join(format!("{}.cfg", core_name))
     }
 
     /// Get path to game-specific config override
@@ -152,7 +155,9 @@ impl RetroArchLauncher {
             .and_then(|s| s.to_str())
             .unwrap_or("unknown");
 
-        self.config_dir.join("config").join(format!("{}.cfg", game_name))
+        self.config_dir
+            .join("config")
+            .join(format!("{}.cfg", game_name))
     }
 
     /// Read a RetroArch config value
@@ -161,10 +166,10 @@ impl RetroArchLauncher {
         let contents = fs::read_to_string(&config_path).ok()?;
 
         for line in contents.lines() {
-            if let Some((k, v)) = line.split_once('=') {
-                if k.trim() == key {
-                    return Some(v.trim().trim_matches('"').to_string());
-                }
+            if let Some((k, v)) = line.split_once('=')
+                && k.trim() == key
+            {
+                return Some(v.trim().trim_matches('"').to_string());
             }
         }
 
@@ -203,11 +208,20 @@ impl RetroArchLauncher {
             .and_then(|s| s.to_str())
             .unwrap_or("unknown");
 
-        let states_dir = self.read_config("savestate_directory")
+        let states_dir = self
+            .read_config("savestate_directory")
             .map(PathBuf::from)
             .unwrap_or_else(|| self.config_dir.join("states"));
 
-        states_dir.join(format!("{}.state{}", game_name, if slot == 0 { String::new() } else { slot.to_string() }))
+        states_dir.join(format!(
+            "{}.state{}",
+            game_name,
+            if slot == 0 {
+                String::new()
+            } else {
+                slot.to_string()
+            }
+        ))
     }
 
     /// Get SRAM save path for a game
@@ -217,7 +231,8 @@ impl RetroArchLauncher {
             .and_then(|s| s.to_str())
             .unwrap_or("unknown");
 
-        let saves_dir = self.read_config("savefile_directory")
+        let saves_dir = self
+            .read_config("savefile_directory")
             .map(PathBuf::from)
             .unwrap_or_else(|| self.config_dir.join("saves"));
 

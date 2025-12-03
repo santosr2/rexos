@@ -1,8 +1,8 @@
 //! Update download with resume support
 
 use crate::{UpdateError, UpdateInfo};
-use std::fs::{self, File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -113,7 +113,10 @@ impl UpdateDownloader {
                 tokio::time::sleep(std::time::Duration::from_secs(2u64.pow(attempt))).await;
             }
 
-            match self.download_with_resume(&update.download_url, &partial_path, resume_from).await {
+            match self
+                .download_with_resume(&update.download_url, &partial_path, resume_from)
+                .await
+            {
                 Ok(()) => {
                     // Rename partial to final
                     fs::rename(&partial_path, &output_path)?;
@@ -161,17 +164,17 @@ impl UpdateDownloader {
 
         let response = request.send().await?;
 
-        if !response.status().is_success() && response.status() != reqwest::StatusCode::PARTIAL_CONTENT {
-            return Err(UpdateError::DownloadFailed(
-                format!("Server returned {}", response.status())
-            ));
+        if !response.status().is_success()
+            && response.status() != reqwest::StatusCode::PARTIAL_CONTENT
+        {
+            return Err(UpdateError::DownloadFailed(format!(
+                "Server returned {}",
+                response.status()
+            )));
         }
 
         // Open file for appending
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)?;
+        let mut file = OpenOptions::new().create(true).append(true).open(path)?;
 
         // Stream the response
         let mut stream = response.bytes_stream();
@@ -233,7 +236,7 @@ impl UpdateDownloader {
                 let entry = entry?;
                 let path = entry.path();
 
-                if path.extension().map_or(false, |e| e == "partial") {
+                if path.extension().is_some_and(|e| e == "partial") {
                     fs::remove_file(path)?;
                 }
             }
@@ -251,11 +254,9 @@ impl UpdateDownloader {
             let path = self.download_dir.as_os_str();
             let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
 
-            let c_path = std::ffi::CString::new(path.as_bytes())
-                .map_err(|e| UpdateError::Io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    e
-                )))?;
+            let c_path = std::ffi::CString::new(path.as_bytes()).map_err(|e| {
+                UpdateError::Io(std::io::Error::new(std::io::ErrorKind::InvalidInput, e))
+            })?;
 
             let result = unsafe { libc::statvfs(c_path.as_ptr(), &mut stat) };
 

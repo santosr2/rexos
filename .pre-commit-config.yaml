@@ -1,10 +1,28 @@
 # RexOS Pre-commit Configuration
 # See https://pre-commit.com for more information
+#
+# Install: pre-commit install
+# Run: pre-commit run --all-files
+#
+# Inspired by: mise, uv, ripgrep, uptool
+
+default_stages: [pre-commit]
+fail_fast: false
+
+# Exclude generated and vendor directories
+exclude: |
+  (?x)^(
+    target/|
+    vendor/|
+    dist/|
+    node_modules/|
+    \.git/
+  )
 
 repos:
   # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -77,7 +95,7 @@ repos:
 
   # Shell script linting
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         args: ['--severity=warning']
@@ -85,11 +103,17 @@ repos:
 
   # Shell script formatting
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.7.0-4
+    rev: v3.8.0-1
     hooks:
       - id: shfmt
-        args: ['-i', '4', '-ci', '-bn']
+        args: ['-i', '2', '-ci', '-bn']
         types: [shell]
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.4
+    hooks:
+      - id: actionlint
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -112,9 +136,23 @@ repos:
       - id: commitizen
         stages: [commit-msg]
 
+  # Spell checking
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: ['--config', '.codespellrc']
+        exclude: |
+          (?x)^(
+            target/|
+            Cargo\.lock|
+            .*\.lock|
+            .*\.min\.js
+          )
+
   # Security scanning
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']

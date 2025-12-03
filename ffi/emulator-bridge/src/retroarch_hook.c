@@ -2,19 +2,20 @@
  * RexOS Emulator Bridge - RetroArch Hooks
  */
 
-#include "emulator_bridge.h"
+#include <fcntl.h>
+#include <linux/input.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <linux/input.h>
-#include <pthread.h>
 #include <time.h>
+#include <unistd.h>
+
+#include "emulator_bridge.h"
 
 /* Hotkey configuration */
-#define HOTKEY_MODIFIER_MASK 0x01  /* Select button */
-#define HOTKEY_TIMEOUT_MS 500
+#define HOTKEY_MODIFIER_MASK 0x01 /* Select button */
+#define HOTKEY_TIMEOUT_MS    500
 
 /* Hotkey state */
 static pthread_mutex_t g_hotkey_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -32,7 +33,7 @@ static struct {
 static int g_input_fd = -1;
 
 /* Display brightness control */
-#define BRIGHTNESS_PATH "/sys/class/backlight/backlight/brightness"
+#define BRIGHTNESS_PATH     "/sys/class/backlight/backlight/brightness"
 #define BRIGHTNESS_MAX_PATH "/sys/class/backlight/backlight/max_brightness"
 
 /**
@@ -51,7 +52,8 @@ static uint64_t get_time_ms(void)
 static int read_sysfs_int(const char* path)
 {
     FILE* f = fopen(path, "r");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     int value;
     if (fscanf(f, "%d", &value) != 1) {
@@ -69,7 +71,8 @@ static int read_sysfs_int(const char* path)
 static int write_sysfs_int(const char* path, int value)
 {
     FILE* f = fopen(path, "w");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     fprintf(f, "%d", value);
     fclose(f);
@@ -84,10 +87,13 @@ int rexos_get_brightness(void)
 rexos_error_t rexos_set_brightness(int brightness)
 {
     int max_brightness = read_sysfs_int(BRIGHTNESS_MAX_PATH);
-    if (max_brightness < 0) max_brightness = 255;
+    if (max_brightness < 0)
+        max_brightness = 255;
 
-    if (brightness < 0) brightness = 0;
-    if (brightness > max_brightness) brightness = max_brightness;
+    if (brightness < 0)
+        brightness = 0;
+    if (brightness > max_brightness)
+        brightness = max_brightness;
 
     if (write_sysfs_int(BRIGHTNESS_PATH, brightness) != 0) {
         return REXOS_ERR_PERMISSION;
@@ -96,8 +102,7 @@ rexos_error_t rexos_set_brightness(int brightness)
     return REXOS_OK;
 }
 
-rexos_error_t rexos_register_hotkey_callback(rexos_hotkey_callback_t callback,
-                                              void* user_data)
+rexos_error_t rexos_register_hotkey_callback(rexos_hotkey_callback_t callback, void* user_data)
 {
     pthread_mutex_lock(&g_hotkey_mutex);
     g_hotkey_callback = callback;
@@ -144,16 +149,16 @@ bool rexos_check_hotkey(rexos_hotkey_action_t action)
             button_index = BTN_START & 0x1F;
             break;
         case REXOS_HOTKEY_SAVE_STATE:
-            button_index = BTN_TR & 0x1F;  /* R1 */
+            button_index = BTN_TR & 0x1F; /* R1 */
             break;
         case REXOS_HOTKEY_LOAD_STATE:
-            button_index = BTN_TL & 0x1F;  /* L1 */
+            button_index = BTN_TL & 0x1F; /* L1 */
             break;
         case REXOS_HOTKEY_SCREENSHOT:
-            button_index = BTN_TL2 & 0x1F;  /* L2 */
+            button_index = BTN_TL2 & 0x1F; /* L2 */
             break;
         case REXOS_HOTKEY_FAST_FORWARD:
-            button_index = BTN_TR2 & 0x1F;  /* R2 */
+            button_index = BTN_TR2 & 0x1F; /* R2 */
             break;
         case REXOS_HOTKEY_MENU:
             button_index = BTN_X & 0x1F;
@@ -177,7 +182,8 @@ bool rexos_check_hotkey(rexos_hotkey_action_t action)
  */
 static void handle_input_event(const struct input_event* ev)
 {
-    if (ev->type != EV_KEY) return;
+    if (ev->type != EV_KEY)
+        return;
 
     bool pressed = (ev->value != 0);
     int button_index = ev->code & 0x1F;
@@ -204,16 +210,16 @@ static void handle_input_event(const struct input_event* ev)
             case BTN_START:
                 action = REXOS_HOTKEY_EXIT;
                 break;
-            case BTN_TR:  /* R1 */
+            case BTN_TR: /* R1 */
                 action = REXOS_HOTKEY_SAVE_STATE;
                 break;
-            case BTN_TL:  /* L1 */
+            case BTN_TL: /* L1 */
                 action = REXOS_HOTKEY_LOAD_STATE;
                 break;
-            case BTN_TL2:  /* L2 */
+            case BTN_TL2: /* L2 */
                 action = REXOS_HOTKEY_SCREENSHOT;
                 break;
-            case BTN_TR2:  /* R2 */
+            case BTN_TR2: /* R2 */
                 action = REXOS_HOTKEY_FAST_FORWARD;
                 break;
             case BTN_X:
@@ -293,20 +299,19 @@ void rexos_close_input_device(void)
  */
 int rexos_generate_hotkey_config(char* buffer, size_t len)
 {
-    const char* config =
-        "# RexOS Hotkey Configuration\n"
-        "input_enable_hotkey_btn = 6\n"      /* Select */
-        "input_exit_emulator_btn = 7\n"      /* Start */
-        "input_save_state_btn = 5\n"         /* R1 */
-        "input_load_state_btn = 4\n"         /* L1 */
-        "input_screenshot_btn = 10\n"        /* L2 */
-        "input_hold_fast_forward_btn = 11\n" /* R2 */
-        "input_menu_toggle_btn = 3\n"        /* X */
-        "input_pause_toggle_btn = 2\n"       /* Y */
-        "input_state_slot_increase_btn = h0right\n"
-        "input_state_slot_decrease_btn = h0left\n"
-        "input_volume_up_btn = h0up\n"
-        "input_volume_down_btn = h0down\n";
+    const char* config = "# RexOS Hotkey Configuration\n"
+                         "input_enable_hotkey_btn = 6\n"      /* Select */
+                         "input_exit_emulator_btn = 7\n"      /* Start */
+                         "input_save_state_btn = 5\n"         /* R1 */
+                         "input_load_state_btn = 4\n"         /* L1 */
+                         "input_screenshot_btn = 10\n"        /* L2 */
+                         "input_hold_fast_forward_btn = 11\n" /* R2 */
+                         "input_menu_toggle_btn = 3\n"        /* X */
+                         "input_pause_toggle_btn = 2\n"       /* Y */
+                         "input_state_slot_increase_btn = h0right\n"
+                         "input_state_slot_decrease_btn = h0left\n"
+                         "input_volume_up_btn = h0up\n"
+                         "input_volume_down_btn = h0down\n";
 
     size_t config_len = strlen(config);
     if (len <= config_len) {
@@ -323,13 +328,16 @@ int rexos_generate_hotkey_config(char* buffer, size_t len)
 void rexos_handle_brightness_hotkey(bool increase)
 {
     int current = rexos_get_brightness();
-    if (current < 0) return;
+    if (current < 0)
+        return;
 
     int max_brightness = read_sysfs_int(BRIGHTNESS_MAX_PATH);
-    if (max_brightness < 0) max_brightness = 255;
+    if (max_brightness < 0)
+        max_brightness = 255;
 
-    int step = max_brightness / 10;  /* 10 steps */
-    if (step < 1) step = 1;
+    int step = max_brightness / 10; /* 10 steps */
+    if (step < 1)
+        step = 1;
 
     int new_brightness;
     if (increase) {
@@ -353,17 +361,20 @@ void rexos_handle_brightness_hotkey(bool increase)
 void rexos_handle_volume_hotkey(bool increase)
 {
     int current = rexos_get_volume();
-    if (current < 0) return;
+    if (current < 0)
+        return;
 
-    int step = 10;  /* 10% steps */
+    int step = 10; /* 10% steps */
 
     int new_volume;
     if (increase) {
         new_volume = current + step;
-        if (new_volume > 100) new_volume = 100;
+        if (new_volume > 100)
+            new_volume = 100;
     } else {
         new_volume = current - step;
-        if (new_volume < 0) new_volume = 0;
+        if (new_volume < 0)
+            new_volume = 0;
     }
 
     rexos_set_volume(new_volume);

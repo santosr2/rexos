@@ -1,6 +1,14 @@
 # YAMLLint configuration for RexOS
+# https://yamllint.readthedocs.io/
 
 extends: default
+
+ignore: |
+  target/
+  vendor/
+  node_modules/
+  dist/
+  .git/
 
 rules:
   line-length:

@@ -98,7 +98,8 @@ impl UpdateChecker {
 
         tracing::debug!("Checking for updates at {}", url);
 
-        let response = self.client
+        let response = self
+            .client
             .get(&url)
             .query(&[
                 ("current_version", current_version),
@@ -112,9 +113,10 @@ impl UpdateChecker {
         }
 
         if !response.status().is_success() {
-            return Err(UpdateError::CheckFailed(
-                format!("Server returned {}", response.status())
-            ));
+            return Err(UpdateError::CheckFailed(format!(
+                "Server returned {}",
+                response.status()
+            )));
         }
 
         let update: UpdateInfo = response.json().await?;
@@ -128,10 +130,15 @@ impl UpdateChecker {
     }
 
     /// Check all channels for updates
-    pub async fn check_all_channels(&self, current_version: &str)
-        -> Result<Vec<UpdateInfo>, UpdateError>
-    {
-        let channels = [UpdateChannel::Stable, UpdateChannel::Beta, UpdateChannel::Nightly];
+    pub async fn check_all_channels(
+        &self,
+        current_version: &str,
+    ) -> Result<Vec<UpdateInfo>, UpdateError> {
+        let channels = [
+            UpdateChannel::Stable,
+            UpdateChannel::Beta,
+            UpdateChannel::Nightly,
+        ];
         let mut updates = Vec::new();
 
         for channel in channels {
@@ -141,20 +148,19 @@ impl UpdateChecker {
                 channel.as_str()
             );
 
-            let response = self.client
+            let response = self
+                .client
                 .get(&url)
                 .query(&[("current_version", current_version)])
                 .send()
                 .await;
 
-            if let Ok(resp) = response {
-                if resp.status().is_success() {
-                    if let Ok(update) = resp.json::<UpdateInfo>().await {
-                        if Self::is_newer(&update.version, current_version) {
-                            updates.push(update);
-                        }
-                    }
-                }
+            if let Ok(resp) = response
+                && resp.status().is_success()
+                && let Ok(update) = resp.json::<UpdateInfo>().await
+                && Self::is_newer(&update.version, current_version)
+            {
+                updates.push(update);
             }
         }
 
@@ -163,18 +169,23 @@ impl UpdateChecker {
 
     /// Get full manifest for an update
     pub async fn get_manifest(&self, update: &UpdateInfo) -> Result<UpdateManifest, UpdateError> {
-        let url = update.manifest_url.clone()
+        let url = update
+            .manifest_url
+            .clone()
             .ok_or_else(|| UpdateError::InvalidManifest("No manifest URL".into()))?;
 
         let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
-            return Err(UpdateError::CheckFailed(
-                format!("Failed to fetch manifest: {}", response.status())
-            ));
+            return Err(UpdateError::CheckFailed(format!(
+                "Failed to fetch manifest: {}",
+                response.status()
+            )));
         }
 
-        let manifest: UpdateManifest = response.json().await
+        let manifest: UpdateManifest = response
+            .json()
+            .await
             .map_err(|e| UpdateError::InvalidManifest(e.to_string()))?;
 
         Ok(manifest)
@@ -184,7 +195,7 @@ impl UpdateChecker {
     pub fn is_newer(new_version: &str, current_version: &str) -> bool {
         match (
             semver::Version::parse(new_version.trim_start_matches('v')),
-            semver::Version::parse(current_version.trim_start_matches('v'))
+            semver::Version::parse(current_version.trim_start_matches('v')),
         ) {
             (Ok(new), Ok(current)) => new > current,
             _ => {
@@ -206,9 +217,10 @@ impl UpdateChecker {
         let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
-            return Err(UpdateError::CheckFailed(
-                format!("Failed to fetch release history: {}", response.status())
-            ));
+            return Err(UpdateError::CheckFailed(format!(
+                "Failed to fetch release history: {}",
+                response.status()
+            )));
         }
 
         let releases: Vec<UpdateInfo> = response.json().await?;

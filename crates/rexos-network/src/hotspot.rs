@@ -2,7 +2,6 @@
 
 use crate::NetworkError;
 use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
 
 /// Hotspot configuration
@@ -153,7 +152,7 @@ impl HotspotManager {
         Command::new("which")
             .arg("hostapd")
             .output()
-            .map_or(false, |o| o.status.success())
+            .is_ok_and(|o| o.status.success())
     }
 
     /// Configure network interface
@@ -165,15 +164,17 @@ impl HotspotManager {
 
         let output = Command::new("ip")
             .args([
-                "addr", "add",
+                "addr",
+                "add",
                 &format!("{}/24", self.config.ip_address),
-                "dev", &self.interface
+                "dev",
+                &self.interface,
             ])
             .output()?;
 
         if !output.status.success() {
             return Err(NetworkError::CommandFailed(
-                String::from_utf8_lossy(&output.stderr).to_string()
+                String::from_utf8_lossy(&output.stderr).to_string(),
             ));
         }
 
@@ -226,9 +227,7 @@ server=8.8.4.4
 domain-needed
 bogus-priv
 "#,
-            self.interface,
-            self.config.dhcp_start,
-            self.config.dhcp_end,
+            self.interface, self.config.dhcp_start, self.config.dhcp_end,
         );
 
         fs::write("/tmp/dnsmasq.conf", config)?;
@@ -243,7 +242,7 @@ bogus-priv
 
         if !output.status.success() {
             return Err(NetworkError::CommandFailed(
-                String::from_utf8_lossy(&output.stderr).to_string()
+                String::from_utf8_lossy(&output.stderr).to_string(),
             ));
         }
 
@@ -270,12 +269,21 @@ bogus-priv
     /// Stop hostapd and dnsmasq
     fn stop_services(&self) {
         // Kill hostapd
-        let _ = Command::new("pkill").arg("-F").arg("/tmp/hostapd.pid").output();
+        let _ = Command::new("pkill")
+            .arg("-F")
+            .arg("/tmp/hostapd.pid")
+            .output();
         let _ = Command::new("pkill").arg("hostapd").output();
 
         // Kill dnsmasq
-        let _ = Command::new("pkill").arg("-F").arg("/tmp/dnsmasq.pid").output();
-        let _ = Command::new("pkill").arg("-f").arg("dnsmasq.*rexos").output();
+        let _ = Command::new("pkill")
+            .arg("-F")
+            .arg("/tmp/dnsmasq.pid")
+            .output();
+        let _ = Command::new("pkill")
+            .arg("-f")
+            .arg("dnsmasq.*rexos")
+            .output();
 
         // Clean up files
         let _ = fs::remove_file("/tmp/hostapd.conf");

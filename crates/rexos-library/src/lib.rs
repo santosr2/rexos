@@ -4,12 +4,12 @@
 //! Based on ArkOS library patterns with SQLite storage.
 
 mod database;
-mod scanner;
 mod metadata;
+mod scanner;
 
-pub use database::{GameDatabase, Game, GameStats};
-pub use scanner::{RomScanner, ScanResult};
+pub use database::{Game, GameDatabase, GameStats};
 pub use metadata::{GameMetadata, MetadataSource};
+pub use scanner::{RomScanner, ScanResult};
 
 use std::path::PathBuf;
 use thiserror::Error;

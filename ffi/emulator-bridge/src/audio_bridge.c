@@ -2,15 +2,16 @@
  * RexOS Emulator Bridge - Audio Bridge
  */
 
-#include "emulator_bridge.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
 
+#include "emulator_bridge.h"
+
 /* ALSA mixer control paths - adjust for your device */
-#define MIXER_CONTROL "Master"
+#define MIXER_CONTROL         "Master"
 #define HEADPHONE_DETECT_PATH "/sys/class/switch/h2w/state"
 
 /**
@@ -22,14 +23,16 @@ static int run_amixer(const char* args, char* output, size_t output_len)
     snprintf(cmd, sizeof(cmd), "amixer %s 2>/dev/null", args);
 
     FILE* fp = popen(cmd, "r");
-    if (!fp) return -1;
+    if (!fp)
+        return -1;
 
     if (output && output_len > 0) {
         size_t total = 0;
         char buf[256];
         while (fgets(buf, sizeof(buf), fp) && total < output_len - 1) {
             size_t len = strlen(buf);
-            if (total + len >= output_len) break;
+            if (total + len >= output_len)
+                break;
             memcpy(output + total, buf, len);
             total += len;
         }
@@ -46,7 +49,8 @@ static int parse_volume(const char* output)
 {
     /* Look for [XX%] pattern */
     const char* p = strstr(output, "[");
-    if (!p) return -1;
+    if (!p)
+        return -1;
 
     int volume;
     if (sscanf(p, "[%d%%]", &volume) != 1) {
@@ -74,8 +78,10 @@ int rexos_get_volume(void)
 
 rexos_error_t rexos_set_volume(int volume)
 {
-    if (volume < 0) volume = 0;
-    if (volume > 100) volume = 100;
+    if (volume < 0)
+        volume = 0;
+    if (volume > 100)
+        volume = 100;
 
     char args[64];
     snprintf(args, sizeof(args), "sset " MIXER_CONTROL " %d%%", volume);
@@ -121,11 +127,8 @@ bool rexos_headphones_connected(void)
     }
 
     /* Try gpio-based detection (device specific) */
-    const char* gpio_paths[] = {
-        "/sys/class/gpio/gpio12/value",  /* Common on RK3566 */
-        "/sys/class/gpio/gpio84/value",
-        NULL
-    };
+    const char* gpio_paths[] = {"/sys/class/gpio/gpio12/value", /* Common on RK3566 */
+                                "/sys/class/gpio/gpio84/value", NULL};
 
     for (int i = 0; gpio_paths[i]; i++) {
         f = fopen(gpio_paths[i], "r");
@@ -134,7 +137,7 @@ bool rexos_headphones_connected(void)
             if (fscanf(f, "%d", &val) == 1) {
                 fclose(f);
                 /* GPIO logic level depends on hardware */
-                return val == 0;  /* Usually active low */
+                return val == 0; /* Usually active low */
             }
             fclose(f);
         }

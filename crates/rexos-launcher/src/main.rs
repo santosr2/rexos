@@ -7,24 +7,24 @@ use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
+    Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
-    Frame, Terminal,
 };
 use std::io;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use tracing::{info, error};
+use tracing::{error, info};
 
-use rexos_library::{GameDatabase, Game, RomScanner};
-use rexos_emulator::{EmulatorLauncher, LaunchConfig};
 use rexos_config::RexOSConfig;
+use rexos_emulator::{EmulatorLauncher, LaunchConfig};
+use rexos_library::{Game, GameDatabase, RomScanner};
 
 /// Application state
 struct App {
@@ -35,6 +35,7 @@ struct App {
     launcher: EmulatorLauncher,
 
     /// Configuration
+    #[allow(dead_code)]
     config: RexOSConfig,
 
     /// Current view
@@ -245,19 +246,19 @@ impl App {
 
     /// Enter selected system
     fn enter_system(&mut self) -> Result<()> {
-        if let Some(i) = self.systems_state.selected() {
-            if i < self.systems.len() {
-                let system = &self.systems[i].0;
-                self.selected_system = Some(system.clone());
-                self.games = self.db.get_games_by_system(system)?;
-                self.view = View::Games;
+        if let Some(i) = self.systems_state.selected()
+            && i < self.systems.len()
+        {
+            let system = &self.systems[i].0;
+            self.selected_system = Some(system.clone());
+            self.games = self.db.get_games_by_system(system)?;
+            self.view = View::Games;
 
-                if !self.games.is_empty() {
-                    self.games_state.select(Some(0));
-                }
-
-                self.status = format!("{} games", self.games.len());
+            if !self.games.is_empty() {
+                self.games_state.select(Some(0));
             }
+
+            self.status = format!("{} games", self.games.len());
         }
         Ok(())
     }
@@ -309,50 +310,50 @@ impl App {
 
     /// Toggle favorite for selected game
     fn toggle_favorite(&mut self) -> Result<()> {
-        if let Some(i) = self.games_state.selected() {
-            if i < self.games.len() {
-                let game = &mut self.games[i];
-                game.favorite = !game.favorite;
-                self.db.set_favorite(game.id, game.favorite)?;
+        if let Some(i) = self.games_state.selected()
+            && i < self.games.len()
+        {
+            let game = &mut self.games[i];
+            game.favorite = !game.favorite;
+            self.db.set_favorite(game.id, game.favorite)?;
 
-                self.status = if game.favorite {
-                    "Added to favorites".to_string()
-                } else {
-                    "Removed from favorites".to_string()
-                };
-            }
+            self.status = if game.favorite {
+                "Added to favorites".to_string()
+            } else {
+                "Removed from favorites".to_string()
+            };
         }
         Ok(())
     }
 
     /// Launch selected game
     fn launch_selected_game(&mut self) -> Result<()> {
-        if let Some(i) = self.games_state.selected() {
-            if i < self.games.len() {
-                let game = &self.games[i];
-                self.status = format!("Launching {}...", game.name);
+        if let Some(i) = self.games_state.selected()
+            && i < self.games.len()
+        {
+            let game = &self.games[i];
+            self.status = format!("Launching {}...", game.name);
 
-                // Build launch config
-                let config = LaunchConfig::for_rom(&game.path);
+            // Build launch config
+            let config = LaunchConfig::for_rom(&game.path);
 
-                // Launch game
-                match self.launcher.launch(config) {
-                    Ok(result) => {
-                        info!("Launched game with PID {}", result.pid);
+            // Launch game
+            match self.launcher.launch(config) {
+                Ok(result) => {
+                    info!("Launched game with PID {}", result.pid);
 
-                        // Wait for emulator to exit
-                        let mut child = result.child;
-                        let _ = child.wait();
+                    // Wait for emulator to exit
+                    let mut child = result.child;
+                    let _ = child.wait();
 
-                        // Update play stats
-                        self.db.update_play_stats(game.id, 0)?;
+                    // Update play stats
+                    self.db.update_play_stats(game.id, 0)?;
 
-                        self.status = "Ready".to_string();
-                    }
-                    Err(e) => {
-                        error!("Failed to launch game: {}", e);
-                        self.status = format!("Error: {}", e);
-                    }
+                    self.status = "Ready".to_string();
+                }
+                Err(e) => {
+                    error!("Failed to launch game: {}", e);
+                    self.status = format!("Error: {}", e);
                 }
             }
         }
@@ -369,7 +370,7 @@ impl App {
         if let Ok(results) = scanner.scan_all(&roms_dir) {
             let mut total_games = 0;
 
-            for (system, games) in results {
+            for (_system, games) in results {
                 for game in games {
                     self.db.add_game(&game)?;
                     total_games += 1;
@@ -387,8 +388,7 @@ impl App {
 
     /// Get selected game
     fn selected_game(&self) -> Option<&Game> {
-        self.games_state.selected()
-            .and_then(|i| self.games.get(i))
+        self.games_state.selected().and_then(|i| self.games.get(i))
     }
 }
 
@@ -397,9 +397,9 @@ fn draw_ui(frame: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),  // Header
-            Constraint::Min(0),     // Main content
-            Constraint::Length(3),  // Footer
+            Constraint::Length(3), // Header
+            Constraint::Min(0),    // Main content
+            Constraint::Length(3), // Footer
         ])
         .split(frame.size());
 
@@ -422,13 +422,20 @@ fn draw_ui(frame: &mut Frame, app: &mut App) {
 fn draw_header(frame: &mut Frame, area: Rect, app: &App) {
     let title = match app.view {
         View::Systems => "RexOS - Select System",
-        View::Games => &format!("RexOS - {}", app.selected_system.as_deref().unwrap_or("Games")),
+        View::Games => &format!(
+            "RexOS - {}",
+            app.selected_system.as_deref().unwrap_or("Games")
+        ),
         View::GameInfo => "RexOS - Game Info",
         View::Settings => "RexOS - Settings",
     };
 
     let header = Paragraph::new(title)
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .block(Block::default().borders(Borders::ALL));
 
     frame.render_widget(header, area);
@@ -436,7 +443,8 @@ fn draw_header(frame: &mut Frame, area: Rect, app: &App) {
 
 /// Draw systems view
 fn draw_systems_view(frame: &mut Frame, area: Rect, app: &mut App) {
-    let items: Vec<ListItem> = app.systems
+    let items: Vec<ListItem> = app
+        .systems
         .iter()
         .map(|(name, count)| {
             let display = format!("{:<20} ({} games)", name, count);
@@ -446,10 +454,12 @@ fn draw_systems_view(frame: &mut Frame, area: Rect, app: &mut App) {
 
     let list = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Systems"))
-        .highlight_style(Style::default()
-            .fg(Color::Black)
-            .bg(Color::Cyan)
-            .add_modifier(Modifier::BOLD))
+        .highlight_style(
+            Style::default()
+                .fg(Color::Black)
+                .bg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("> ");
 
     frame.render_stateful_widget(list, area, &mut app.systems_state);
@@ -457,7 +467,8 @@ fn draw_systems_view(frame: &mut Frame, area: Rect, app: &mut App) {
 
 /// Draw games view
 fn draw_games_view(frame: &mut Frame, area: Rect, app: &mut App) {
-    let items: Vec<ListItem> = app.games
+    let items: Vec<ListItem> = app
+        .games
         .iter()
         .map(|game| {
             let prefix = if game.favorite { "★ " } else { "  " };
@@ -468,10 +479,12 @@ fn draw_games_view(frame: &mut Frame, area: Rect, app: &mut App) {
 
     let list = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Games"))
-        .highlight_style(Style::default()
-            .fg(Color::Black)
-            .bg(Color::Cyan)
-            .add_modifier(Modifier::BOLD))
+        .highlight_style(
+            Style::default()
+                .fg(Color::Black)
+                .bg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("> ");
 
     frame.render_stateful_widget(list, area, &mut app.games_state);
@@ -497,9 +510,10 @@ fn draw_game_info_view(frame: &mut Frame, area: Rect, app: &App) {
 
         if let Some(ref desc) = game.description {
             lines.push(Line::from(""));
-            lines.push(Line::from(vec![
-                Span::styled("Description: ", Style::default().add_modifier(Modifier::BOLD)),
-            ]));
+            lines.push(Line::from(vec![Span::styled(
+                "Description: ",
+                Style::default().add_modifier(Modifier::BOLD),
+            )]));
             lines.push(Line::from(desc.as_str()));
         }
 
@@ -575,9 +589,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 
 fn main() -> Result<()> {
     // Setup logging
-    tracing_subscriber::fmt()
-        .with_env_filter("info")
-        .init();
+    tracing_subscriber::fmt().with_env_filter("info").init();
 
     info!("RexOS Launcher starting...");
 
@@ -602,12 +614,11 @@ fn main() -> Result<()> {
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
 
-        if event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    app.handle_input(key.code)?;
-                }
-            }
+        if event::poll(timeout)?
+            && let Event::Key(key) = event::read()?
+            && key.kind == KeyEventKind::Press
+        {
+            app.handle_input(key.code)?;
         }
 
         if last_tick.elapsed() >= tick_rate {

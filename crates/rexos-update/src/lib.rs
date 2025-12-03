@@ -17,14 +17,14 @@ mod installer;
 mod manifest;
 mod verification;
 
-pub use checker::{UpdateChecker, UpdateInfo, UpdateChannel};
-pub use downloader::{UpdateDownloader, DownloadProgress, DownloadState};
-pub use installer::{UpdateInstaller, InstallProgress, InstallResult};
-pub use manifest::{UpdateManifest, ReleaseNotes, FileEntry};
-pub use verification::{SignatureVerifier, VerificationError};
-
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
+
+pub use checker::{UpdateChannel, UpdateChecker, UpdateInfo};
+pub use downloader::{DownloadProgress, DownloadState, UpdateDownloader};
+pub use installer::{InstallProgress, InstallResult, UpdateInstaller};
+pub use manifest::{FileEntry, ReleaseNotes, UpdateManifest};
+pub use verification::{SignatureVerifier, VerificationError};
 
 #[derive(Debug, Error)]
 pub enum UpdateError {
@@ -116,19 +116,11 @@ pub struct UpdateManager {
 impl UpdateManager {
     /// Create a new update manager
     pub fn new(config: UpdateConfig) -> Self {
-        let checker = UpdateChecker::new(
-            config.server_url.clone(),
-            config.channel,
-        );
+        let checker = UpdateChecker::new(config.server_url.clone(), config.channel);
 
-        let downloader = UpdateDownloader::new(
-            config.download_dir.clone(),
-            config.max_retries,
-        );
+        let downloader = UpdateDownloader::new(config.download_dir.clone(), config.max_retries);
 
-        let installer = UpdateInstaller::new(
-            config.staging_dir.clone(),
-        );
+        let installer = UpdateInstaller::new(config.staging_dir.clone());
 
         Self {
             config,
@@ -150,11 +142,12 @@ impl UpdateManager {
     }
 
     /// Verify a downloaded update
-    pub fn verify(&self, path: &PathBuf, update: &UpdateInfo) -> Result<(), UpdateError> {
+    pub fn verify(&self, path: &Path, update: &UpdateInfo) -> Result<(), UpdateError> {
         let verifier = SignatureVerifier::from_hex(&self.config.public_key)
             .map_err(|e| UpdateError::VerificationFailed(e.to_string()))?;
 
-        verifier.verify_file(path, &update.signature)
+        verifier
+            .verify_file(path, &update.signature)
             .map_err(|e| UpdateError::VerificationFailed(e.to_string()))
     }
 
@@ -166,11 +159,13 @@ impl UpdateManager {
     /// Perform full update cycle
     pub async fn update(&self) -> Result<InstallResult, UpdateError> {
         // Check for updates
-        let update = self.check().await?
-            .ok_or(UpdateError::NoUpdate)?;
+        let update = self.check().await?.ok_or(UpdateError::NoUpdate)?;
 
-        tracing::info!("Update available: {} -> {}",
-            self.get_current_version()?, update.version);
+        tracing::info!(
+            "Update available: {} -> {}",
+            self.get_current_version()?,
+            update.version
+        );
 
         // Download
         let path = self.download(&update).await?;
@@ -196,7 +191,8 @@ impl UpdateManager {
             let contents = std::fs::read_to_string(&version_file)?;
             for line in contents.lines() {
                 if line.starts_with("VERSION=") {
-                    return Ok(line.trim_start_matches("VERSION=")
+                    return Ok(line
+                        .trim_start_matches("VERSION=")
                         .trim_matches('"')
                         .to_string());
                 }

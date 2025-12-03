@@ -1,12 +1,12 @@
 //! Update installation with rollback support
 
 use crate::UpdateError;
+use flate2::read::GzDecoder;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
-use flate2::read::GzDecoder;
 use tar::Archive;
 
 /// Installation progress
@@ -60,7 +60,8 @@ pub struct UpdateInstaller {
 impl UpdateInstaller {
     /// Create a new installer
     pub fn new(staging_dir: PathBuf) -> Self {
-        let backup_dir = staging_dir.parent()
+        let backup_dir = staging_dir
+            .parent()
             .unwrap_or(Path::new("/tmp"))
             .join("rexos-backup");
 
@@ -148,7 +149,7 @@ impl UpdateInstaller {
     }
 
     /// Verify extracted files match manifest
-    fn verify_extracted_files(&self, files: &[PathBuf]) -> Result<(), UpdateError> {
+    fn verify_extracted_files(&self, _files: &[PathBuf]) -> Result<(), UpdateError> {
         // Check for manifest
         let manifest_path = self.staging_dir.join("manifest.json");
 
@@ -169,12 +170,13 @@ impl UpdateInstaller {
                 if file_path.exists() {
                     let actual_hash = self.compute_sha256(&file_path)?;
 
-                    if let Some(expected) = expected_hash.as_str() {
-                        if actual_hash != expected {
-                            return Err(UpdateError::VerificationFailed(
-                                format!("Hash mismatch for {}", file)
-                            ));
-                        }
+                    if let Some(expected) = expected_hash.as_str()
+                        && actual_hash != expected
+                    {
+                        return Err(UpdateError::VerificationFailed(format!(
+                            "Hash mismatch for {}",
+                            file
+                        )));
                     }
                 }
             }
@@ -185,7 +187,7 @@ impl UpdateInstaller {
 
     /// Compute SHA256 hash of a file
     fn compute_sha256(&self, path: &PathBuf) -> Result<String, UpdateError> {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
 
         let mut file = File::open(path)?;
         let mut hasher = Sha256::new();
@@ -234,7 +236,7 @@ impl UpdateInstaller {
 
         fs::write(
             self.backup_dir.join("backup-manifest.json"),
-            serde_json::to_string_pretty(&manifest).unwrap()
+            serde_json::to_string_pretty(&manifest).unwrap(),
         )?;
 
         tracing::info!("Created backup of {} files", files.len());
@@ -285,7 +287,6 @@ impl UpdateInstaller {
             if let Ok(metadata) = fs::metadata(&source) {
                 #[cfg(unix)]
                 {
-                    use std::os::unix::fs::PermissionsExt;
                     fs::set_permissions(&dest, metadata.permissions())?;
                 }
             }
@@ -300,7 +301,12 @@ impl UpdateInstaller {
         // Handle file removals (from manifest)
         let removed = self.process_removals()?;
 
-        tracing::info!("Applied update: {} updated, {} added, {} removed", updated, added, removed);
+        tracing::info!(
+            "Applied update: {} updated, {} added, {} removed",
+            updated,
+            added,
+            removed
+        );
         Ok((updated, added, removed))
     }
 
@@ -347,16 +353,15 @@ impl UpdateInstaller {
             return Ok(false);
         }
 
-        let output = Command::new("sh")
-            .arg(&script_path)
-            .output()?;
+        let output = Command::new("sh").arg(&script_path).output()?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             tracing::error!("Post-install script failed: {}", stderr);
-            return Err(UpdateError::InstallFailed(
-                format!("Post-install script failed: {}", stderr)
-            ));
+            return Err(UpdateError::InstallFailed(format!(
+                "Post-install script failed: {}",
+                stderr
+            )));
         }
 
         // Check if reboot is needed
@@ -373,7 +378,9 @@ impl UpdateInstaller {
         let manifest_path = self.backup_dir.join("backup-manifest.json");
 
         if !manifest_path.exists() {
-            return Err(UpdateError::RollbackFailed("Backup manifest not found".into()));
+            return Err(UpdateError::RollbackFailed(
+                "Backup manifest not found".into(),
+            ));
         }
 
         let manifest_content = fs::read_to_string(&manifest_path)?;

@@ -73,8 +73,10 @@ impl AudioManager {
         // Use amixer to set volume
         let result = Command::new("amixer")
             .args([
-                "-c", &self.config.alsa_card,
-                "sset", &self.config.mixer_control,
+                "-c",
+                &self.config.alsa_card,
+                "sset",
+                &self.config.mixer_control,
                 &format!("{}%", volume),
             ])
             .output();
@@ -122,7 +124,13 @@ impl AudioManager {
             self.config.muted = true;
 
             let _ = Command::new("amixer")
-                .args(["-c", &self.config.alsa_card, "sset", &self.config.mixer_control, "mute"])
+                .args([
+                    "-c",
+                    &self.config.alsa_card,
+                    "sset",
+                    &self.config.mixer_control,
+                    "mute",
+                ])
                 .output();
 
             tracing::info!("Audio muted");
@@ -136,7 +144,13 @@ impl AudioManager {
             self.config.muted = false;
 
             let _ = Command::new("amixer")
-                .args(["-c", &self.config.alsa_card, "sset", &self.config.mixer_control, "unmute"])
+                .args([
+                    "-c",
+                    &self.config.alsa_card,
+                    "sset",
+                    &self.config.mixer_control,
+                    "unmute",
+                ])
                 .output();
 
             self.set_volume(self.previous_volume)?;

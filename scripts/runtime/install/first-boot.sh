@@ -58,13 +58,13 @@ mark_complete() {
 main() {
     log_info "RexOS First Boot Configuration"
     log_info "==============================="
-    
+
     check_first_boot
     detect_device
     setup_directories
     initialize_database
     mark_complete
-    
+
     log_info "System ready!"
 }
 

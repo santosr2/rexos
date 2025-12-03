@@ -35,11 +35,23 @@ impl Button {
     /// Get all standard buttons
     pub fn all() -> &'static [Button] {
         &[
-            Button::Up, Button::Down, Button::Left, Button::Right,
-            Button::A, Button::B, Button::X, Button::Y,
-            Button::L1, Button::L2, Button::R1, Button::R2,
-            Button::L3, Button::R3,
-            Button::Start, Button::Select, Button::Home,
+            Button::Up,
+            Button::Down,
+            Button::Left,
+            Button::Right,
+            Button::A,
+            Button::B,
+            Button::X,
+            Button::Y,
+            Button::L1,
+            Button::L2,
+            Button::R1,
+            Button::R2,
+            Button::L3,
+            Button::R3,
+            Button::Start,
+            Button::Select,
+            Button::Home,
         ]
     }
 
@@ -82,10 +94,7 @@ impl AnalogStick {
 
     /// Get normalized values (0.0 to 1.0)
     pub fn normalized(&self) -> (f32, f32) {
-        (
-            self.x as f32 / 32767.0,
-            self.y as f32 / 32767.0,
-        )
+        (self.x as f32 / 32767.0, self.y as f32 / 32767.0)
     }
 }
 
@@ -221,16 +230,15 @@ impl InputManager {
             .unwrap_or(false);
 
         // Heuristics for gamepad detection
-        let is_gamepad = has_keys && (
-            name.to_lowercase().contains("gamepad") ||
-            name.to_lowercase().contains("joystick") ||
-            name.to_lowercase().contains("controller") ||
-            name.to_lowercase().contains("gpio") ||
-            name.to_lowercase().contains("odroidgo") ||
-            name.to_lowercase().contains("anbernic") ||
-            name.to_lowercase().contains("rg351") ||
-            name.to_lowercase().contains("rg353")
-        );
+        let is_gamepad = has_keys
+            && (name.to_lowercase().contains("gamepad")
+                || name.to_lowercase().contains("joystick")
+                || name.to_lowercase().contains("controller")
+                || name.to_lowercase().contains("gpio")
+                || name.to_lowercase().contains("odroidgo")
+                || name.to_lowercase().contains("anbernic")
+                || name.to_lowercase().contains("rg351")
+                || name.to_lowercase().contains("rg353"));
 
         Ok(InputDevice {
             path: path.to_path_buf(),
@@ -245,25 +253,25 @@ impl InputManager {
         let mut map = HashMap::new();
 
         // Standard gamepad buttons (BTN_* from input-event-codes.h)
-        map.insert(304, Button::A);      // BTN_SOUTH / BTN_A
-        map.insert(305, Button::B);      // BTN_EAST / BTN_B
-        map.insert(307, Button::X);      // BTN_NORTH / BTN_X
-        map.insert(308, Button::Y);      // BTN_WEST / BTN_Y
-        map.insert(310, Button::L1);     // BTN_TL
-        map.insert(311, Button::R1);     // BTN_TR
-        map.insert(312, Button::L2);     // BTN_TL2
-        map.insert(313, Button::R2);     // BTN_TR2
+        map.insert(304, Button::A); // BTN_SOUTH / BTN_A
+        map.insert(305, Button::B); // BTN_EAST / BTN_B
+        map.insert(307, Button::X); // BTN_NORTH / BTN_X
+        map.insert(308, Button::Y); // BTN_WEST / BTN_Y
+        map.insert(310, Button::L1); // BTN_TL
+        map.insert(311, Button::R1); // BTN_TR
+        map.insert(312, Button::L2); // BTN_TL2
+        map.insert(313, Button::R2); // BTN_TR2
         map.insert(314, Button::Select); // BTN_SELECT
-        map.insert(315, Button::Start);  // BTN_START
-        map.insert(316, Button::Home);   // BTN_MODE
-        map.insert(317, Button::L3);     // BTN_THUMBL
-        map.insert(318, Button::R3);     // BTN_THUMBR
+        map.insert(315, Button::Start); // BTN_START
+        map.insert(316, Button::Home); // BTN_MODE
+        map.insert(317, Button::L3); // BTN_THUMBL
+        map.insert(318, Button::R3); // BTN_THUMBR
 
         // D-pad as buttons
-        map.insert(544, Button::Up);     // BTN_DPAD_UP
-        map.insert(545, Button::Down);   // BTN_DPAD_DOWN
-        map.insert(546, Button::Left);   // BTN_DPAD_LEFT
-        map.insert(547, Button::Right);  // BTN_DPAD_RIGHT
+        map.insert(544, Button::Up); // BTN_DPAD_UP
+        map.insert(545, Button::Down); // BTN_DPAD_DOWN
+        map.insert(546, Button::Left); // BTN_DPAD_LEFT
+        map.insert(547, Button::Right); // BTN_DPAD_RIGHT
 
         map
     }
@@ -280,9 +288,8 @@ impl InputManager {
                 match file.read(&mut buffer) {
                     Ok(size) if size == buffer.len() => {
                         // SAFETY: InputEvent is repr(C) and the buffer is correctly sized
-                        let event: InputEvent = unsafe {
-                            std::ptr::read(buffer.as_ptr() as *const InputEvent)
-                        };
+                        let event: InputEvent =
+                            unsafe { std::ptr::read(buffer.as_ptr() as *const InputEvent) };
                         events.push(event);
                     }
                     _ => break,
@@ -314,20 +321,22 @@ impl InputManager {
             0x03 => {
                 match event.code {
                     // Left stick
-                    0x00 => self.state.left_stick.x = event.value as i16,  // ABS_X
-                    0x01 => self.state.left_stick.y = event.value as i16,  // ABS_Y
+                    0x00 => self.state.left_stick.x = event.value as i16, // ABS_X
+                    0x01 => self.state.left_stick.y = event.value as i16, // ABS_Y
                     // Right stick
                     0x03 => self.state.right_stick.x = event.value as i16, // ABS_RX
                     0x04 => self.state.right_stick.y = event.value as i16, // ABS_RY
                     // Triggers
-                    0x02 => self.state.l2_analog = event.value as i16,     // ABS_Z
-                    0x05 => self.state.r2_analog = event.value as i16,     // ABS_RZ
+                    0x02 => self.state.l2_analog = event.value as i16, // ABS_Z
+                    0x05 => self.state.r2_analog = event.value as i16, // ABS_RZ
                     // D-pad as axes (HAT)
-                    0x10 => { // ABS_HAT0X
+                    0x10 => {
+                        // ABS_HAT0X
                         self.state.buttons.insert(Button::Left, event.value < 0);
                         self.state.buttons.insert(Button::Right, event.value > 0);
                     }
-                    0x11 => { // ABS_HAT0Y
+                    0x11 => {
+                        // ABS_HAT0Y
                         self.state.buttons.insert(Button::Up, event.value < 0);
                         self.state.buttons.insert(Button::Down, event.value > 0);
                     }
@@ -417,7 +426,10 @@ mod tests {
 
     #[test]
     fn test_analog_stick_normalized() {
-        let stick = AnalogStick { x: 32767, y: -32768 };
+        let stick = AnalogStick {
+            x: 32767,
+            y: -32768,
+        };
         let (nx, ny) = stick.normalized();
         assert!((nx - 1.0).abs() < 0.01);
         assert!((ny + 1.0).abs() < 0.01);

@@ -1,0 +1,20 @@
+# Hadolint - Dockerfile linter configuration
+# https://github.com/hadolint/hadolint
+
+# Ignored rules
+ignored:
+  - DL3008  # Pin versions in apt-get install (too strict for base images)
+  - DL3009  # Delete apt cache after installation (handled by cleanup)
+  - DL3018  # Pin versions in apk add (too strict for Alpine)
+
+# Trusted registries for base images
+trustedRegistries:
+  - docker.io
+  - gcr.io
+  - ghcr.io
+
+# Failure threshold (error, warning, info, style, ignore, none)
+failure-threshold: warning
+
+# Allow inline ignores
+disable-ignore-pragma: false

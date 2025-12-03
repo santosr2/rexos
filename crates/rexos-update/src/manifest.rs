@@ -1,7 +1,6 @@
 //! Update manifest format
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Update manifest containing all update metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -280,31 +279,32 @@ impl UpdateManifest {
     /// Check if device is supported
     pub fn supports_device(&self, device_id: &str) -> bool {
         self.target_devices.is_empty()
-            || self.target_devices.iter().any(|d| d == device_id || d == "*")
+            || self
+                .target_devices
+                .iter()
+                .any(|d| d == device_id || d == "*")
     }
 
     /// Check if current version can update to this version
     pub fn can_update_from(&self, current_version: &str) -> bool {
-        if let Some(ref min) = self.min_version {
-            if let (Ok(min_ver), Ok(curr_ver)) = (
+        if let Some(ref min) = self.min_version
+            && let (Ok(min_ver), Ok(curr_ver)) = (
                 semver::Version::parse(min),
-                semver::Version::parse(current_version)
-            ) {
-                if curr_ver < min_ver {
-                    return false;
-                }
-            }
+                semver::Version::parse(current_version),
+            )
+            && curr_ver < min_ver
+        {
+            return false;
         }
 
-        if let Some(ref max) = self.max_version {
-            if let (Ok(max_ver), Ok(curr_ver)) = (
+        if let Some(ref max) = self.max_version
+            && let (Ok(max_ver), Ok(curr_ver)) = (
                 semver::Version::parse(max),
-                semver::Version::parse(current_version)
-            ) {
-                if curr_ver >= max_ver {
-                    return false;
-                }
-            }
+                semver::Version::parse(current_version),
+            )
+            && curr_ver >= max_ver
+        {
+            return false;
         }
 
         true

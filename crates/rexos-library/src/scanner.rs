@@ -36,14 +36,9 @@ impl Default for ScanConfig {
         let mut extensions = HashSet::new();
         // Common ROM extensions
         for ext in &[
-            "nes", "fds", "smc", "sfc", "n64", "z64", "v64",
-            "gb", "gbc", "gba", "nds",
-            "sms", "gg", "md", "gen", "bin", "32x",
-            "pce", "sgx",
-            "iso", "cso", "chd", "pbp", "cue",
-            "a26", "a78", "lnx",
-            "ngp", "ngc", "ws", "wsc",
-            "zip", "7z",
+            "nes", "fds", "smc", "sfc", "n64", "z64", "v64", "gb", "gbc", "gba", "nds", "sms",
+            "gg", "md", "gen", "bin", "32x", "pce", "sgx", "iso", "cso", "chd", "pbp", "cue",
+            "a26", "a78", "lnx", "ngp", "ngc", "ws", "wsc", "zip", "7z",
         ] {
             extensions.insert(ext.to_string());
         }
@@ -96,7 +91,12 @@ impl RomScanner {
     }
 
     /// Recursively scan a directory
-    fn scan_dir(&self, path: &Path, system: &str, games: &mut Vec<Game>) -> Result<(), LibraryError> {
+    fn scan_dir(
+        &self,
+        path: &Path,
+        system: &str,
+        games: &mut Vec<Game>,
+    ) -> Result<(), LibraryError> {
         if !path.exists() || !path.is_dir() {
             return Ok(());
         }
@@ -123,12 +123,11 @@ impl RomScanner {
                 }
             } else if entry_path.is_file() {
                 // Check extension
-                if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
-                    if self.config.extensions.contains(&ext.to_lowercase()) {
-                        if let Some(game) = self.create_game(&entry_path, system) {
-                            games.push(game);
-                        }
-                    }
+                if let Some(ext) = entry_path.extension().and_then(|e| e.to_str())
+                    && self.config.extensions.contains(&ext.to_lowercase())
+                    && let Some(game) = self.create_game(&entry_path, system)
+                {
+                    games.push(game);
                 }
             }
         }
@@ -167,14 +166,12 @@ impl RomScanner {
         // Remove common patterns in parentheses/brackets
         let patterns = [
             // Regions
-            "(USA)", "(Europe)", "(Japan)", "(World)", "(U)", "(E)", "(J)", "(W)",
-            "(En)", "(Fr)", "(De)", "(Es)", "(It)",
-            // Versions
-            "(Rev 1)", "(Rev 2)", "(Rev A)", "(Rev B)",
-            "(v1.0)", "(v1.1)", "(v1.2)",
+            "(USA)", "(Europe)", "(Japan)", "(World)", "(U)", "(E)", "(J)", "(W)", "(En)", "(Fr)",
+            "(De)", "(Es)", "(It)", // Versions
+            "(Rev 1)", "(Rev 2)", "(Rev A)", "(Rev B)", "(v1.0)", "(v1.1)", "(v1.2)",
             // Tags
-            "(Unl)", "(Proto)", "(Beta)", "(Demo)", "(Sample)",
-            "[!]", "[a]", "[b]", "[h]", "[o]", "[t]",
+            "(Unl)", "(Proto)", "(Beta)", "(Demo)", "(Sample)", "[!]", "[a]", "[b]", "[h]", "[o]",
+            "[t]",
         ];
 
         for pattern in &patterns {
@@ -263,10 +260,7 @@ mod tests {
             RomScanner::clean_game_name("Super Mario World (USA)"),
             "Super Mario World"
         );
-        assert_eq!(
-            RomScanner::clean_game_name("Zelda (Europe) [!]"),
-            "Zelda"
-        );
+        assert_eq!(RomScanner::clean_game_name("Zelda (Europe) [!]"), "Zelda");
         assert_eq!(
             RomScanner::clean_game_name("Pokemon Red (U) (Rev 1)"),
             "Pokemon Red"

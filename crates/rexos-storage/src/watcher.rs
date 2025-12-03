@@ -2,7 +2,7 @@
 
 use crate::StorageError;
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::thread;
 use std::time::Duration;
 
@@ -14,7 +14,10 @@ pub enum StorageEvent {
     /// A device was disconnected
     DeviceRemoved { device: PathBuf },
     /// A partition was mounted
-    Mounted { device: PathBuf, mount_point: PathBuf },
+    Mounted {
+        device: PathBuf,
+        mount_point: PathBuf,
+    },
     /// A partition was unmounted
     Unmounted { mount_point: PathBuf },
 }

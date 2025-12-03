@@ -1,7 +1,7 @@
 //! Game database using SQLite
 
 use crate::LibraryError;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use std::path::Path;
 
 /// A game in the library
@@ -58,7 +58,8 @@ impl GameDatabase {
 
     /// Initialize database schema
     fn init_schema(&self) -> Result<(), LibraryError> {
-        self.conn.execute_batch(r#"
+        self.conn.execute_batch(
+            r#"
             CREATE TABLE IF NOT EXISTS games (
                 id INTEGER PRIMARY KEY,
                 path TEXT NOT NULL UNIQUE,
@@ -105,7 +106,8 @@ impl GameDatabase {
             CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
             CREATE INDEX IF NOT EXISTS idx_games_favorite ON games(favorite);
             CREATE INDEX IF NOT EXISTS idx_game_stats_last_played ON game_stats(last_played);
-        "#)?;
+        "#,
+        )?;
 
         Ok(())
     }
@@ -138,33 +140,38 @@ impl GameDatabase {
 
     /// Get a game by ID
     pub fn get_game(&self, id: i64) -> Result<Option<Game>, LibraryError> {
-        let game = self.conn.query_row(
-            "SELECT * FROM games WHERE id = ?1",
-            params![id],
-            |row| Self::row_to_game(row),
-        ).optional()?;
+        let game = self
+            .conn
+            .query_row("SELECT * FROM games WHERE id = ?1", params![id], |row| {
+                Self::row_to_game(row)
+            })
+            .optional()?;
 
         Ok(game)
     }
 
     /// Get a game by path
     pub fn get_game_by_path(&self, path: &str) -> Result<Option<Game>, LibraryError> {
-        let game = self.conn.query_row(
-            "SELECT * FROM games WHERE path = ?1",
-            params![path],
-            |row| Self::row_to_game(row),
-        ).optional()?;
+        let game = self
+            .conn
+            .query_row(
+                "SELECT * FROM games WHERE path = ?1",
+                params![path],
+                Self::row_to_game,
+            )
+            .optional()?;
 
         Ok(game)
     }
 
     /// Get all games
     pub fn get_all_games(&self) -> Result<Vec<Game>, LibraryError> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM games WHERE hidden = 0 ORDER BY name"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM games WHERE hidden = 0 ORDER BY name")?;
 
-        let games = stmt.query_map([], |row| Self::row_to_game(row))?
+        let games = stmt
+            .query_map([], Self::row_to_game)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(games)
@@ -172,11 +179,12 @@ impl GameDatabase {
 
     /// Get games by system
     pub fn get_games_by_system(&self, system: &str) -> Result<Vec<Game>, LibraryError> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM games WHERE system = ?1 AND hidden = 0 ORDER BY name"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM games WHERE system = ?1 AND hidden = 0 ORDER BY name")?;
 
-        let games = stmt.query_map(params![system], |row| Self::row_to_game(row))?
+        let games = stmt
+            .query_map(params![system], Self::row_to_game)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(games)
@@ -184,11 +192,12 @@ impl GameDatabase {
 
     /// Get favorite games
     pub fn get_favorites(&self) -> Result<Vec<Game>, LibraryError> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM games WHERE favorite = 1 AND hidden = 0 ORDER BY name"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM games WHERE favorite = 1 AND hidden = 0 ORDER BY name")?;
 
-        let games = stmt.query_map([], |row| Self::row_to_game(row))?
+        let games = stmt
+            .query_map([], Self::row_to_game)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(games)
@@ -201,10 +210,11 @@ impl GameDatabase {
                JOIN game_stats s ON g.id = s.game_id
                WHERE g.hidden = 0 AND s.last_played IS NOT NULL
                ORDER BY s.last_played DESC
-               LIMIT ?1"#
+               LIMIT ?1"#,
         )?;
 
-        let games = stmt.query_map(params![limit as i64], |row| Self::row_to_game(row))?
+        let games = stmt
+            .query_map(params![limit as i64], Self::row_to_game)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(games)
@@ -212,12 +222,13 @@ impl GameDatabase {
 
     /// Search games by name
     pub fn search_games(&self, query: &str) -> Result<Vec<Game>, LibraryError> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM games WHERE name LIKE ?1 AND hidden = 0 ORDER BY name"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM games WHERE name LIKE ?1 AND hidden = 0 ORDER BY name")?;
 
         let pattern = format!("%{}%", query);
-        let games = stmt.query_map(params![pattern], |row| Self::row_to_game(row))?
+        let games = stmt
+            .query_map(params![pattern], Self::row_to_game)?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(games)
@@ -243,7 +254,8 @@ impl GameDatabase {
 
     /// Delete a game
     pub fn delete_game(&self, id: i64) -> Result<(), LibraryError> {
-        self.conn.execute("DELETE FROM games WHERE id = ?1", params![id])?;
+        self.conn
+            .execute("DELETE FROM games WHERE id = ?1", params![id])?;
         Ok(())
     }
 
@@ -278,11 +290,11 @@ impl GameDatabase {
 
     /// Get total game count
     pub fn game_count(&self) -> Result<i64, LibraryError> {
-        let count: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM games WHERE hidden = 0",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            self.conn
+                .query_row("SELECT COUNT(*) FROM games WHERE hidden = 0", [], |row| {
+                    row.get(0)
+                })?;
         Ok(count)
     }
 
@@ -299,10 +311,11 @@ impl GameDatabase {
     /// Get list of systems with game counts
     pub fn get_systems(&self) -> Result<Vec<(String, i64)>, LibraryError> {
         let mut stmt = self.conn.prepare(
-            "SELECT system, COUNT(*) FROM games WHERE hidden = 0 GROUP BY system ORDER BY system"
+            "SELECT system, COUNT(*) FROM games WHERE hidden = 0 GROUP BY system ORDER BY system",
         )?;
 
-        let systems = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+        let systems = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(systems)

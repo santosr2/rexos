@@ -3,7 +3,7 @@
 ## Core Features
 
 ### 1. Fast Boot System ⚡
-**Priority**: High  
+**Priority**: High
 **Target**: < 10 seconds from power-on to UI
 
 #### Requirements
@@ -21,7 +21,7 @@
 ---
 
 ### 2. Hardware Abstraction Layer (HAL) 🔧
-**Priority**: Critical  
+**Priority**: Critical
 **Status**: Design Phase
 
 #### Supported Hardware
@@ -46,7 +46,7 @@ battery_capacity = 3500
 ---
 
 ### 3. Game Library Manager 📚
-**Priority**: High  
+**Priority**: High
 **Status**: Planning
 
 #### Features
@@ -78,7 +78,7 @@ CREATE TABLE games (
 ---
 
 ### 4. Emulator Management 🎮
-**Priority**: Critical  
+**Priority**: Critical
 **Status**: Design
 
 #### Supported Emulators
@@ -91,7 +91,7 @@ CREATE TABLE games (
 gb:
   default: gambatte
   alternatives: [sameboy, tgbdual, gearboy]
-  
+
 gba:
   default: mgba
   alternatives: [vba-next, vba-m, gpsp]
@@ -110,7 +110,7 @@ n64:
 ---
 
 ### 5. Input System 🕹️
-**Priority**: Critical  
+**Priority**: Critical
 **Status**: Planning
 
 #### Features
@@ -133,7 +133,7 @@ screenshot = "Select + L2"
 ---
 
 ### 6. Display Management 📺
-**Priority**: High  
+**Priority**: High
 **Status**: Design
 
 #### Features
@@ -147,7 +147,7 @@ screenshot = "Select + L2"
 ---
 
 ### 7. Audio System 🔊
-**Priority**: High  
+**Priority**: High
 **Status**: Planning
 
 #### Features
@@ -159,7 +159,7 @@ screenshot = "Select + L2"
 ---
 
 ### 8. Network Services 🌐
-**Priority**: Medium  
+**Priority**: Medium
 **Status**: Future
 
 #### Features
@@ -172,7 +172,7 @@ screenshot = "Select + L2"
 ---
 
 ### 9. Update System 🔄
-**Priority**: High  
+**Priority**: High
 **Status**: Design
 
 #### Features
@@ -204,7 +204,7 @@ Reboot if needed
 ---
 
 ### 10. Power Management 🔋
-**Priority**: High  
+**Priority**: High
 **Status**: Planning
 
 #### Features
@@ -224,7 +224,7 @@ Reboot if needed
 ---
 
 ### 11. Save State Management 💾
-**Priority**: High  
+**Priority**: High
 **Status**: Design
 
 #### Features
@@ -237,7 +237,7 @@ Reboot if needed
 ---
 
 ### 12. Theme Support 🎨
-**Priority**: Medium  
+**Priority**: Medium
 **Status**: Future
 
 #### Features
@@ -249,7 +249,7 @@ Reboot if needed
 ---
 
 ### 13. Scraper Integration 🖼️
-**Priority**: Medium  
+**Priority**: Medium
 **Status**: Future
 
 #### Supported Sources
@@ -267,7 +267,7 @@ Reboot if needed
 ---
 
 ### 14. RetroAchievements 🏆
-**Priority**: Low  
+**Priority**: Low
 **Status**: Future
 
 #### Features

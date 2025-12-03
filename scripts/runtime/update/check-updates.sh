@@ -42,15 +42,15 @@ get_current_version() {
 check_for_updates() {
     local current_version
     current_version=$(get_current_version)
-    
+
     log_info "Current RexOS version: $current_version"
     log_info "Checking for updates..."
-    
+
     # TODO: Implement actual update checking
     # This is a placeholder that would normally contact update server
-    
+
     log_info "Contacting update server: $UPDATE_SERVER"
-    
+
     # Simulated check
     if command -v curl &> /dev/null; then
         # In production, this would check the update server
@@ -76,7 +76,7 @@ Options:
 
 Description:
     Checks for available RexOS updates from the update server.
-    
+
 Examples:
     $(basename "$0")              # Check for updates
     $(basename "$0") --verbose    # Check with verbose output
@@ -87,7 +87,7 @@ EOF
 main() {
     local verbose=0
     local force=0
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -110,10 +110,10 @@ main() {
                 ;;
         esac
     done
-    
+
     log_info "RexOS Update Checker"
     log_info "===================="
-    
+
     if check_for_updates; then
         log_info "Update check completed successfully"
         exit 0

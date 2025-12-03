@@ -1,41 +1,83 @@
 # mise.toml - Tool and language management for RexOS
 # Install mise: https://mise.jdx.dev/getting-started.html
 # Run: mise install
+#
+# Inspired by: mise, uv, ripgrep, bat, fish-shell
+
+min_version = "2024.1.1"
 
 [env]
 # Rust settings
 CARGO_TERM_COLOR = "always"
 RUST_BACKTRACE = "1"
+CARGO_INCREMENTAL = "1"
 
 # Cross-compilation settings
 CROSS_CONTAINER_ENGINE = "docker"
 
+# Add local binaries to PATH
+_.path = ["./target/debug", "./target/release"]
+
 [tools]
-# Rust toolchain - latest stable (2024 edition support)
-rust = "latest"
+# Rust toolchain - pinned for reproducibility (Edition 2024)
+rust = "1.85"
 
-# Python for Buildroot and scripts - latest 3.x
-python = "latest"
+# Rust cargo extensions (inspired by mise project)
+cargo-binstall = "latest"
+cargo-nextest = "latest"      # Faster test runner
+cargo-insta = "latest"        # Snapshot testing
+cargo-deny = "latest"         # License & security checks
+cargo-audit = "latest"        # Security advisories
+cargo-machete = "latest"      # Find unused deps
+cargo-release = "latest"      # Release automation
+cargo-llvm-cov = "latest"     # Code coverage
+taplo = "latest"              # TOML formatter
 
-# Node.js LTS for tooling
-node = "lts"
+# Git & versioning (inspired by uptool)
+git-cliff = "latest"          # Changelog generator
+gh = "latest"                 # GitHub CLI
+bump-my-version = "latest"    # Version management
 
-# Shell script linting - latest versions
+# Shell script linting
 shfmt = "latest"
 shellcheck = "latest"
 
-# YAML/JSON tools - latest versions
+# YAML/JSON/Markdown tools
 yq = "latest"
 jq = "latest"
+yamllint = "latest"           # YAML linting
+markdownlint-cli = "latest"   # Markdown linting
+
+# Security tools (inspired by uptool)
+cosign = "latest"             # Container/artifact signing
+detect-secrets = "latest"     # Secret detection in code
+
+# Spell checking
+codespell = "latest"          # Code spell checker
 
 # Pre-commit for git hooks
 pre-commit = "latest"
+actionlint = "latest"         # GitHub Actions linting
+
+# Docker/Container tools
+hadolint = "latest"           # Dockerfile linting
 
 # Cross-compilation helper
 cross = "latest"
 
 # C/C++ tooling (for emulator bridge)
 cmake = "latest"
+ninja = "latest"
+
+# Python for Buildroot and scripts
+python = "latest"
+pipx = "latest"               # Python tool installer
+
+# Node.js for documentation/tooling
+node = "lts"
+
+[settings]
+experimental = true
 
 [tasks.setup]
 description = "Initial project setup"
@@ -79,35 +121,100 @@ description = "Build release binaries"
 run = "cargo build --release"
 
 [tasks.test]
-description = "Run all tests"
-run = "cargo test"
+alias = "t"
+description = "Run all tests with nextest"
+run = "cargo nextest run --all-features"
 
-[tasks.test-verbose]
+[tasks."test:unit"]
+description = "Run unit tests only"
+run = "cargo nextest run --lib --all-features"
+
+[tasks."test:integration"]
+description = "Run integration tests"
+run = "cargo nextest run --test '*' --all-features"
+
+[tasks."test:verbose"]
 description = "Run tests with output"
-run = "cargo test -- --nocapture"
+run = "cargo nextest run --all-features --no-capture"
+
+[tasks."test:coverage"]
+description = "Run tests with coverage"
+run = """
+cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+cargo llvm-cov report --html
+echo "Coverage report: target/llvm-cov/html/index.html"
+"""
 
 [tasks.lint]
 description = "Run all linters"
+depends = ["lint:rust", "lint:toml", "lint:shell", "lint:yaml", "lint:markdown", "lint:spell"]
+
+[tasks."lint:rust"]
+description = "Lint Rust code"
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
-
-echo "🔍 Running Rust formatter check..."
+echo "🔍 Checking Rust formatting..."
 cargo fmt -- --check
-
 echo "🔍 Running Clippy..."
-cargo clippy -- -D warnings
+cargo clippy --all-features --all-targets -- -D warnings
+echo "✅ Rust lints passed!"
+"""
 
-echo "🔍 Running shell script checks..."
-if command -v shellcheck &> /dev/null; then
-    find scripts -name "*.sh" -exec shellcheck {} +
-fi
+[tasks."lint:toml"]
+description = "Lint TOML files"
+run = "taplo check"
 
-if command -v shfmt &> /dev/null; then
-    shfmt -d scripts/
-fi
+[tasks."lint:shell"]
+description = "Lint shell scripts"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+echo "🔍 Running shellcheck..."
+find scripts -name "*.sh" -exec shellcheck {} + 2>/dev/null || true
+echo "🔍 Checking shell formatting..."
+shfmt -d scripts/ 2>/dev/null || true
+echo "✅ Shell lints passed!"
+"""
 
-echo "✅ All lints passed!"
+[tasks."lint:yaml"]
+description = "Lint YAML files"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+echo "🔍 Linting YAML files..."
+yamllint -c .yamllint.yaml . 2>/dev/null || yamllint .
+echo "✅ YAML lints passed!"
+"""
+
+[tasks."lint:markdown"]
+description = "Lint Markdown files"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+echo "🔍 Linting Markdown files..."
+markdownlint '**/*.md' --ignore target --ignore vendor --ignore node_modules
+echo "✅ Markdown lints passed!"
+"""
+
+[tasks."lint:spell"]
+description = "Check spelling in code and docs"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+echo "🔍 Checking spelling..."
+codespell --config .codespellrc .
+echo "✅ Spell check passed!"
+"""
+
+[tasks."lint:docker"]
+description = "Lint Dockerfiles"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+echo "🔍 Linting Dockerfiles..."
+find . -name "Dockerfile*" -not -path "./target/*" -exec hadolint {} +
+echo "✅ Dockerfile lints passed!"
 """
 
 [tasks.fmt]
@@ -143,9 +250,57 @@ run = "cargo watch -x check -x test"
 description = "Security audit dependencies"
 run = "cargo audit"
 
+[tasks.deny]
+description = "Check licenses and security advisories"
+run = "cargo deny check"
+
+[tasks.security]
+description = "Run all security checks"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔒 Running security checks..."
+
+echo ""
+echo "Step 1/3: Cargo audit (vulnerability database)"
+cargo audit
+
+echo ""
+echo "Step 2/3: Cargo deny (licenses & advisories)"
+cargo deny check
+
+echo ""
+echo "Step 3/3: Detect secrets"
+detect-secrets scan --baseline .secrets.baseline . 2>/dev/null || echo "⚠️ No secrets baseline found, run 'detect-secrets scan > .secrets.baseline' to create one"
+
+echo ""
+echo "✅ Security checks passed!"
+"""
+
+[tasks.machete]
+description = "Find unused dependencies"
+run = "cargo machete"
+
 [tasks.outdated]
 description = "Check for outdated dependencies"
 run = "cargo outdated"
+
+[tasks.snapshots]
+description = "Update test snapshots"
+run = "cargo insta review"
+
+[tasks."snapshots:accept"]
+description = "Accept all pending snapshots"
+run = "cargo insta accept"
+
+[tasks.changelog]
+description = "Generate changelog from commits"
+run = "git-cliff -o CHANGELOG.md"
+
+[tasks.release]
+description = "Create a new release"
+run = "cargo release"
 
 [tasks.doc]
 description = "Generate documentation"

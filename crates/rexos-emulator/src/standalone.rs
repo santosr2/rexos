@@ -97,7 +97,7 @@ impl StandaloneLauncher {
                     .with_display_name("PPSSPP")
                     .with_system("psp")
                     .with_args(vec!["--fullscreen".to_string()])
-                    .with_config_dir("/home/ark/.config/ppsspp")
+                    .with_config_dir("/home/ark/.config/ppsspp"),
             );
         }
 
@@ -107,7 +107,7 @@ impl StandaloneLauncher {
                 EmulatorInfo::new("drastic", "/opt/drastic/drastic")
                     .with_display_name("DraStic")
                     .with_system("nds")
-                    .with_config_dir("/opt/drastic")
+                    .with_config_dir("/opt/drastic"),
             );
         }
 
@@ -117,7 +117,7 @@ impl StandaloneLauncher {
                 EmulatorInfo::new("amiberry", "/usr/bin/amiberry")
                     .with_display_name("Amiberry")
                     .with_system("amiga")
-                    .with_config_dir("/home/ark/.config/amiberry")
+                    .with_config_dir("/home/ark/.config/amiberry"),
             );
         }
 
@@ -127,7 +127,7 @@ impl StandaloneLauncher {
                 EmulatorInfo::new("scummvm", "/usr/bin/scummvm")
                     .with_display_name("ScummVM")
                     .with_system("scummvm")
-                    .with_args(vec!["--fullscreen".to_string()])
+                    .with_args(vec!["--fullscreen".to_string()]),
             );
         }
 
@@ -137,7 +137,7 @@ impl StandaloneLauncher {
                 EmulatorInfo::new("dosbox", "/usr/bin/dosbox")
                     .with_display_name("DOSBox")
                     .with_system("dos")
-                    .with_args(vec!["-fullscreen".to_string()])
+                    .with_args(vec!["-fullscreen".to_string()]),
             );
         }
 
@@ -146,7 +146,7 @@ impl StandaloneLauncher {
             self.register(
                 EmulatorInfo::new("openbor", "/usr/bin/OpenBOR")
                     .with_display_name("OpenBOR")
-                    .with_system("openbor")
+                    .with_system("openbor"),
             );
         }
 
@@ -155,7 +155,7 @@ impl StandaloneLauncher {
             self.register(
                 EmulatorInfo::new("fake08", "/usr/bin/fake08")
                     .with_display_name("Fake08 (Pico-8)")
-                    .with_system("pico8")
+                    .with_system("pico8"),
             );
         }
     }
@@ -186,7 +186,9 @@ impl StandaloneLauncher {
 
     /// Check if emulator exists
     pub fn exists(&self, name: &str) -> bool {
-        self.emulators.iter().any(|e| e.name == name && e.path.exists())
+        self.emulators
+            .iter()
+            .any(|e| e.name == name && e.path.exists())
     }
 
     /// Launch a standalone emulator
@@ -196,7 +198,8 @@ impl StandaloneLauncher {
         rom_path: &Path,
         extra_args: &[String],
     ) -> Result<Child, EmulatorError> {
-        let info = self.get(emulator)
+        let info = self
+            .get(emulator)
             .ok_or_else(|| EmulatorError::CoreNotFound(emulator.to_string()))?;
 
         if !info.path.exists() {
@@ -259,6 +262,7 @@ mod tests {
     fn test_standalone_launcher() {
         let launcher = StandaloneLauncher::new();
         // Should have registered defaults (may or may not exist on test system)
-        assert!(launcher.list().len() >= 0);
+        // The list() method always returns a valid Vec, even if empty
+        let _emulators = launcher.list();
     }
 }

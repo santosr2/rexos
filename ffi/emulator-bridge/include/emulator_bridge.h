@@ -8,8 +8,8 @@
 #ifndef REXOS_EMULATOR_BRIDGE_H
 #define REXOS_EMULATOR_BRIDGE_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
@@ -26,7 +26,7 @@ extern "C" {
 
 #define REXOS_MAX_PATH 4096
 #define REXOS_MAX_ARGS 64
-#define REXOS_MAX_ENV 128
+#define REXOS_MAX_ENV  128
 
 /* ============================================================================
  * Error Codes
@@ -53,11 +53,11 @@ typedef enum {
  * Emulator type enumeration
  */
 typedef enum {
-    REXOS_EMU_RETROARCH,      /* RetroArch with libretro core */
-    REXOS_EMU_STANDALONE,     /* Standalone emulator */
-    REXOS_EMU_PPSSPP,         /* PPSSPP for PSP */
-    REXOS_EMU_DRASTIC,        /* DraStic for DS */
-    REXOS_EMU_CUSTOM          /* Custom emulator */
+    REXOS_EMU_RETROARCH,  /* RetroArch with libretro core */
+    REXOS_EMU_STANDALONE, /* Standalone emulator */
+    REXOS_EMU_PPSSPP,     /* PPSSPP for PSP */
+    REXOS_EMU_DRASTIC,    /* DraStic for DS */
+    REXOS_EMU_CUSTOM      /* Custom emulator */
 } rexos_emulator_type_t;
 
 /**
@@ -115,11 +115,11 @@ typedef struct {
     bool fullscreen;
     bool verbose;
     bool use_32bit;
-    int load_state_slot;    /* -1 = don't load */
+    int load_state_slot; /* -1 = don't load */
 
     /* Performance options */
-    int cpu_affinity;       /* -1 = no affinity */
-    int nice_value;         /* Process priority */
+    int cpu_affinity; /* -1 = no affinity */
+    int nice_value;   /* Process priority */
     bool realtime_priority;
 
 } rexos_launch_config_t;
@@ -137,8 +137,7 @@ int rexos_launch_config_add_arg(rexos_launch_config_t* config, const char* arg);
 /**
  * Add an environment variable
  */
-int rexos_launch_config_add_env(rexos_launch_config_t* config,
-                                 const char* key, const char* value);
+int rexos_launch_config_add_env(rexos_launch_config_t* config, const char* key, const char* value);
 
 /* ============================================================================
  * Process Management
@@ -151,9 +150,9 @@ typedef struct {
     pid_t pid;
     rexos_proc_state_t state;
     int exit_code;
-    uint64_t start_time;    /* Timestamp in milliseconds */
-    uint64_t cpu_time_ms;   /* CPU time used */
-    uint64_t memory_kb;     /* Memory usage in KB */
+    uint64_t start_time;  /* Timestamp in milliseconds */
+    uint64_t cpu_time_ms; /* CPU time used */
+    uint64_t memory_kb;   /* Memory usage in KB */
 } rexos_process_info_t;
 
 /**
@@ -350,8 +349,7 @@ typedef void (*rexos_hotkey_callback_t)(int action, void* user_data);
 /**
  * Register hotkey callback
  */
-rexos_error_t rexos_register_hotkey_callback(rexos_hotkey_callback_t callback,
-                                              void* user_data);
+rexos_error_t rexos_register_hotkey_callback(rexos_hotkey_callback_t callback, void* user_data);
 
 /**
  * Hotkey actions

@@ -105,7 +105,10 @@ impl StorageDevice {
     }
 
     /// Find partitions for a device
-    fn find_partitions(sysfs_path: &Path, device_name: &str) -> Result<Vec<Partition>, StorageError> {
+    fn find_partitions(
+        sysfs_path: &Path,
+        device_name: &str,
+    ) -> Result<Vec<Partition>, StorageError> {
         let mut partitions = Vec::new();
 
         for entry in fs::read_dir(sysfs_path)? {

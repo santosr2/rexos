@@ -14,7 +14,7 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Instant;
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 /// Boot stages for timing
 #[derive(Debug, Clone, Copy)]
@@ -47,7 +47,10 @@ fn main() -> Result<()> {
     // Check if we're running as PID 1
     let pid = std::process::id();
     if pid != 1 {
-        warn!("Not running as PID 1 (pid={}), some features may not work", pid);
+        warn!(
+            "Not running as PID 1 (pid={}), some features may not work",
+            pid
+        );
     }
 
     // Install signal handlers
@@ -84,22 +87,19 @@ fn main() -> Result<()> {
 
 /// Setup logging to console and file
 fn setup_logging() {
-    use tracing_subscriber::{fmt, EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+    use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     tracing_subscriber::registry()
         .with(filter)
-        .with(fmt::layer()
-            .with_target(false)
-            .with_ansi(false))
+        .with(fmt::layer().with_target(false).with_ansi(false))
         .init();
 }
 
 /// Setup signal handlers for graceful shutdown
 fn setup_signal_handlers() -> Result<()> {
-    use nix::sys::signal::{sigaction, SaFlags, SigAction, SigHandler, SigSet, Signal};
+    use nix::sys::signal::{SaFlags, SigAction, SigHandler, SigSet, Signal, sigaction};
 
     let action = SigAction::new(
         SigHandler::Handler(handle_signal),
@@ -149,7 +149,7 @@ extern "C" fn handle_signal(sig: i32) {
 
 /// SIGCHLD handler to reap zombie processes
 extern "C" fn handle_sigchld(_sig: i32) {
-    use nix::sys::wait::{waitpid, WaitPidFlag, WaitStatus};
+    use nix::sys::wait::{WaitPidFlag, WaitStatus, waitpid};
 
     loop {
         match waitpid(nix::unistd::Pid::from_raw(-1), Some(WaitPidFlag::WNOHANG)) {
@@ -195,9 +195,11 @@ fn mount_filesystems() -> Result<()> {
 /// Check if a path is mounted
 fn is_mounted(path: &str) -> bool {
     fs::read_to_string("/proc/mounts")
-        .map(|mounts| mounts.lines().any(|line| {
-            line.split_whitespace().nth(1) == Some(path)
-        }))
+        .map(|mounts| {
+            mounts
+                .lines()
+                .any(|line| line.split_whitespace().nth(1) == Some(path))
+        })
         .unwrap_or(false)
 }
 
@@ -235,9 +237,9 @@ fn mount_roms_partition() -> Result<()> {
 
     // Try common ROM partition locations
     let candidates = [
-        "/dev/mmcblk1p1",  // External SD card
-        "/dev/mmcblk0p3",  // Third partition on internal
-        "/dev/sda1",       // USB drive
+        "/dev/mmcblk1p1", // External SD card
+        "/dev/mmcblk0p3", // Third partition on internal
+        "/dev/sda1",      // USB drive
     ];
 
     for device in &candidates {
@@ -264,7 +266,11 @@ fn initialize_hardware() -> Result<()> {
 
     // Load device profile
     let device = rexos_hal::Device::detect()?;
-    info!("Detected device: {} ({})", device.profile().name, device.profile().chipset);
+    info!(
+        "Detected device: {} ({})",
+        device.profile().name,
+        device.profile().chipset
+    );
 
     // Initialize display
     init_display(&device)?;
@@ -312,10 +318,7 @@ fn init_display(_device: &rexos_hal::Device) -> Result<()> {
 /// Show boot splash screen
 fn show_splash_screen() -> Result<()> {
     // Look for splash image
-    let splash_paths = [
-        "/etc/rexos/splash.png",
-        "/usr/share/rexos/splash.png",
-    ];
+    let splash_paths = ["/etc/rexos/splash.png", "/usr/share/rexos/splash.png"];
 
     for path in &splash_paths {
         if Path::new(path).exists() {
@@ -335,11 +338,7 @@ fn init_input(_device: &rexos_hal::Device) -> Result<()> {
     // Input is typically handled by Linux input subsystem
     // Just verify common input devices exist
 
-    let input_paths = [
-        "/dev/input/event0",
-        "/dev/input/event1",
-        "/dev/input/js0",
-    ];
+    let input_paths = ["/dev/input/event0", "/dev/input/event1", "/dev/input/js0"];
 
     let mut found = false;
     for path in &input_paths {
@@ -358,7 +357,7 @@ fn init_input(_device: &rexos_hal::Device) -> Result<()> {
 }
 
 /// Initialize audio
-fn init_audio(device: &rexos_hal::Device) -> Result<()> {
+fn init_audio(_device: &rexos_hal::Device) -> Result<()> {
     // Set initial volume
     let config = rexos_config::RexOSConfig::load_default()?;
 
@@ -400,7 +399,11 @@ fn start_services() -> Result<()> {
 
     // Start essential services
     let services = [
-        ("dbus", "/usr/bin/dbus-daemon", &["--system", "--nofork"][..]),
+        (
+            "dbus",
+            "/usr/bin/dbus-daemon",
+            &["--system", "--nofork"][..],
+        ),
         ("udev", "/sbin/udevd", &["--daemon"][..]),
     ];
 
@@ -415,7 +418,9 @@ fn start_services() -> Result<()> {
 
     // Trigger udev to populate /dev
     let _ = Command::new("udevadm").args(["trigger"]).output();
-    let _ = Command::new("udevadm").args(["settle", "--timeout=5"]).output();
+    let _ = Command::new("udevadm")
+        .args(["settle", "--timeout=5"])
+        .output();
 
     Ok(())
 }
@@ -490,6 +495,7 @@ mod services {
     //! Service management
 }
 
+#[allow(dead_code)]
 mod shutdown {
     //! Shutdown handling
 
@@ -525,7 +531,9 @@ mod shutdown {
 
     fn stop_services() {
         // Kill all non-essential processes
-        let _ = Command::new("pkill").args(["-TERM", "emulationstation"]).output();
+        let _ = Command::new("pkill")
+            .args(["-TERM", "emulationstation"])
+            .output();
         let _ = Command::new("pkill").args(["-TERM", "retroarch"]).output();
 
         // Wait for processes to exit

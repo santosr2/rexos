@@ -2,22 +2,23 @@
  * RexOS Emulator Bridge - Performance Monitoring
  */
 
-#include "emulator_bridge.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
+
+#include "emulator_bridge.h"
 
 /* Sysfs paths */
-#define CPU_TEMP_PATH "/sys/class/thermal/thermal_zone0/temp"
-#define CPU_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
-#define CPU_GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
-#define CPU_MIN_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
-#define CPU_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
+#define CPU_TEMP_PATH         "/sys/class/thermal/thermal_zone0/temp"
+#define CPU_FREQ_PATH         "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
+#define CPU_GOVERNOR_PATH     "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+#define CPU_MIN_FREQ_PATH     "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
+#define CPU_MAX_FREQ_PATH     "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define BATTERY_CAPACITY_PATH "/sys/class/power_supply/battery/capacity"
-#define BATTERY_STATUS_PATH "/sys/class/power_supply/battery/status"
-#define BATTERY_TEMP_PATH "/sys/class/power_supply/battery/temp"
+#define BATTERY_STATUS_PATH   "/sys/class/power_supply/battery/status"
+#define BATTERY_TEMP_PATH     "/sys/class/power_supply/battery/temp"
 
 /* Static CPU usage tracking */
 static unsigned long long prev_user = 0;
@@ -34,7 +35,8 @@ static unsigned long long prev_softirq = 0;
 static int read_sysfs_int(const char* path)
 {
     FILE* f = fopen(path, "r");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     int value;
     if (fscanf(f, "%d", &value) != 1) {
@@ -52,7 +54,8 @@ static int read_sysfs_int(const char* path)
 static int read_sysfs_string(const char* path, char* buf, size_t len)
 {
     FILE* f = fopen(path, "r");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     if (!fgets(buf, len, f)) {
         fclose(f);
@@ -75,7 +78,8 @@ static int read_sysfs_string(const char* path, char* buf, size_t len)
 static int write_sysfs_string(const char* path, const char* value)
 {
     FILE* f = fopen(path, "w");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     fprintf(f, "%s", value);
     fclose(f);
@@ -88,7 +92,8 @@ static int write_sysfs_string(const char* path, const char* value)
 static int write_sysfs_int(const char* path, int value)
 {
     FILE* f = fopen(path, "w");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     fprintf(f, "%d", value);
     fclose(f);
@@ -101,7 +106,8 @@ static int write_sysfs_int(const char* path, int value)
 static float calculate_cpu_usage(void)
 {
     FILE* f = fopen("/proc/stat", "r");
-    if (!f) return 0.0f;
+    if (!f)
+        return 0.0f;
 
     char line[256];
     if (!fgets(line, sizeof(line), f)) {
@@ -112,8 +118,8 @@ static float calculate_cpu_usage(void)
 
     unsigned long long user, nice, system, idle, iowait, irq, softirq;
 
-    sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu",
-           &user, &nice, &system, &idle, &iowait, &irq, &softirq);
+    sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu", &user, &nice, &system, &idle, &iowait,
+           &irq, &softirq);
 
     /* Calculate deltas */
     unsigned long long d_user = user - prev_user;
@@ -124,8 +130,7 @@ static float calculate_cpu_usage(void)
     unsigned long long d_irq = irq - prev_irq;
     unsigned long long d_softirq = softirq - prev_softirq;
 
-    unsigned long long total = d_user + d_nice + d_system + d_idle +
-                               d_iowait + d_irq + d_softirq;
+    unsigned long long total = d_user + d_nice + d_system + d_idle + d_iowait + d_irq + d_softirq;
     unsigned long long busy = d_user + d_nice + d_system + d_irq + d_softirq;
 
     /* Save current values */
@@ -137,7 +142,8 @@ static float calculate_cpu_usage(void)
     prev_irq = irq;
     prev_softirq = softirq;
 
-    if (total == 0) return 0.0f;
+    if (total == 0)
+        return 0.0f;
     return (float)busy / (float)total * 100.0f;
 }
 
@@ -151,7 +157,8 @@ static void get_memory_info(uint64_t* total, uint64_t* free, uint64_t* available
     *available = 0;
 
     FILE* f = fopen("/proc/meminfo", "r");
-    if (!f) return;
+    if (!f)
+        return;
 
     char line[256];
     while (fgets(line, sizeof(line), f)) {
@@ -201,7 +208,8 @@ rexos_error_t rexos_get_perf_stats(rexos_perf_stats_t* stats)
 
     /* Battery */
     stats->battery_percent = read_sysfs_int(BATTERY_CAPACITY_PATH);
-    if (stats->battery_percent < 0) stats->battery_percent = 100;
+    if (stats->battery_percent < 0)
+        stats->battery_percent = 100;
 
     char status[32];
     if (read_sysfs_string(BATTERY_STATUS_PATH, status, sizeof(status)) == 0) {
@@ -214,12 +222,8 @@ rexos_error_t rexos_get_perf_stats(rexos_perf_stats_t* stats)
     }
 
     /* GPU stats - try common paths for Mali/Adreno */
-    const char* gpu_paths[] = {
-        "/sys/class/devfreq/ffa30000.gpu/load",
-        "/sys/kernel/gpu/gpu_busy",
-        "/sys/class/kgsl/kgsl-3d0/gpu_busy_percentage",
-        NULL
-    };
+    const char* gpu_paths[] = {"/sys/class/devfreq/ffa30000.gpu/load", "/sys/kernel/gpu/gpu_busy",
+                               "/sys/class/kgsl/kgsl-3d0/gpu_busy_percentage", NULL};
 
     for (int i = 0; gpu_paths[i]; i++) {
         int gpu_load = read_sysfs_int(gpu_paths[i]);
@@ -230,11 +234,8 @@ rexos_error_t rexos_get_perf_stats(rexos_perf_stats_t* stats)
     }
 
     /* GPU temperature */
-    const char* gpu_temp_paths[] = {
-        "/sys/class/thermal/thermal_zone1/temp",
-        "/sys/class/kgsl/kgsl-3d0/temp",
-        NULL
-    };
+    const char* gpu_temp_paths[] = {"/sys/class/thermal/thermal_zone1/temp",
+                                    "/sys/class/kgsl/kgsl-3d0/temp", NULL};
 
     for (int i = 0; gpu_temp_paths[i]; i++) {
         int gpu_temp = read_sysfs_int(gpu_temp_paths[i]);
@@ -254,10 +255,8 @@ rexos_error_t rexos_set_cpu_governor(const char* governor)
     }
 
     /* Valid governors */
-    const char* valid[] = {
-        "performance", "powersave", "schedutil", "ondemand",
-        "conservative", "userspace", NULL
-    };
+    const char* valid[] = {"performance",  "powersave", "schedutil", "ondemand",
+                           "conservative", "userspace", NULL};
 
     int valid_governor = 0;
     for (int i = 0; valid[i]; i++) {
@@ -274,10 +273,10 @@ rexos_error_t rexos_set_cpu_governor(const char* governor)
     /* Set governor for all CPUs */
     char path[128];
     for (int cpu = 0; cpu < 8; cpu++) {
-        snprintf(path, sizeof(path),
-                 "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor", cpu);
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor", cpu);
 
-        if (access(path, W_OK) != 0) continue;
+        if (access(path, W_OK) != 0)
+            continue;
 
         if (write_sysfs_string(path, governor) != 0) {
             /* First failure is acceptable, might just be less CPUs */
@@ -298,16 +297,16 @@ rexos_error_t rexos_set_cpu_freq(uint32_t min_freq, uint32_t max_freq)
     /* Set for all CPUs */
     for (int cpu = 0; cpu < 8; cpu++) {
         if (min_freq > 0) {
-            snprintf(path, sizeof(path),
-                     "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_min_freq", cpu);
+            snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_min_freq",
+                     cpu);
             if (access(path, W_OK) == 0) {
                 write_sysfs_int(path, min_freq);
             }
         }
 
         if (max_freq > 0) {
-            snprintf(path, sizeof(path),
-                     "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq", cpu);
+            snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq",
+                     cpu);
             if (access(path, W_OK) == 0) {
                 write_sysfs_int(path, max_freq);
             }

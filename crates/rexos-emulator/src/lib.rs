@@ -8,8 +8,8 @@ mod retroarch;
 mod standalone;
 
 pub use launcher::{EmulatorLauncher, LaunchConfig, LaunchResult};
-pub use retroarch::{RetroArchLauncher, CoreInfo};
-pub use standalone::{StandaloneLauncher, EmulatorInfo};
+pub use retroarch::{CoreInfo, RetroArchLauncher};
+pub use standalone::{EmulatorInfo, StandaloneLauncher};
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -207,7 +207,10 @@ mod tests {
 
     #[test]
     fn test_system_from_extension() {
-        assert_eq!(GameSystem::from_extension("gba"), Some(GameSystem::GameBoyAdvance));
+        assert_eq!(
+            GameSystem::from_extension("gba"),
+            Some(GameSystem::GameBoyAdvance)
+        );
         assert_eq!(GameSystem::from_extension("nes"), Some(GameSystem::Nes));
         assert_eq!(GameSystem::from_extension("unknown"), None);
     }

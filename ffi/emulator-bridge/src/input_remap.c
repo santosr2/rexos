@@ -2,15 +2,16 @@
  * RexOS Emulator Bridge - Input Remapping
  */
 
-#include "emulator_bridge.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <linux/uinput.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <linux/input.h>
-#include <linux/uinput.h>
-#include <errno.h>
+
+#include "emulator_bridge.h"
 
 /* Default deadzone value */
 static int g_deadzone = 4096;
@@ -44,7 +45,8 @@ rexos_error_t rexos_set_deadzone(int deadzone)
     /* Also write to RetroArch config if available */
     const char* ra_config = "/home/ark/.config/retroarch/retroarch.cfg";
     FILE* f = fopen(ra_config, "r");
-    if (!f) return REXOS_OK;  /* File doesn't exist, that's OK */
+    if (!f)
+        return REXOS_OK; /* File doesn't exist, that's OK */
 
     /* Read entire file */
     fseek(f, 0, SEEK_END);
@@ -140,7 +142,7 @@ static int create_virtual_device(void)
     struct uinput_setup usetup;
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x1234;  /* RexOS vendor ID */
+    usetup.id.vendor = 0x1234; /* RexOS vendor ID */
     usetup.id.product = 0x5678;
     strcpy(usetup.name, "RexOS Virtual Controller");
 
@@ -205,7 +207,7 @@ static unsigned short apply_mapping(unsigned short code)
             return g_button_map[i].to;
         }
     }
-    return code;  /* No mapping, return original */
+    return code; /* No mapping, return original */
 }
 
 /**
@@ -214,23 +216,40 @@ static unsigned short apply_mapping(unsigned short code)
 const char* rexos_button_name(rexos_button_t button)
 {
     switch (button) {
-        case REXOS_BTN_A: return "A";
-        case REXOS_BTN_B: return "B";
-        case REXOS_BTN_X: return "X";
-        case REXOS_BTN_Y: return "Y";
-        case REXOS_BTN_L1: return "L1";
-        case REXOS_BTN_R1: return "R1";
-        case REXOS_BTN_L2: return "L2";
-        case REXOS_BTN_R2: return "R2";
-        case REXOS_BTN_SELECT: return "Select";
-        case REXOS_BTN_START: return "Start";
-        case REXOS_BTN_L3: return "L3";
-        case REXOS_BTN_R3: return "R3";
-        case REXOS_BTN_DPAD_UP: return "Up";
-        case REXOS_BTN_DPAD_DOWN: return "Down";
-        case REXOS_BTN_DPAD_LEFT: return "Left";
-        case REXOS_BTN_DPAD_RIGHT: return "Right";
-        default: return "Unknown";
+        case REXOS_BTN_A:
+            return "A";
+        case REXOS_BTN_B:
+            return "B";
+        case REXOS_BTN_X:
+            return "X";
+        case REXOS_BTN_Y:
+            return "Y";
+        case REXOS_BTN_L1:
+            return "L1";
+        case REXOS_BTN_R1:
+            return "R1";
+        case REXOS_BTN_L2:
+            return "L2";
+        case REXOS_BTN_R2:
+            return "R2";
+        case REXOS_BTN_SELECT:
+            return "Select";
+        case REXOS_BTN_START:
+            return "Start";
+        case REXOS_BTN_L3:
+            return "L3";
+        case REXOS_BTN_R3:
+            return "R3";
+        case REXOS_BTN_DPAD_UP:
+            return "Up";
+        case REXOS_BTN_DPAD_DOWN:
+            return "Down";
+        case REXOS_BTN_DPAD_LEFT:
+            return "Left";
+        case REXOS_BTN_DPAD_RIGHT:
+            return "Right";
+        default:
+            return "Unknown";
     }
 }
 
@@ -246,7 +265,8 @@ int rexos_scan_input_devices(char devices[][64], int max_devices)
         snprintf(path, sizeof(path), "/dev/input/event%d", i);
 
         int fd = open(path, O_RDONLY);
-        if (fd < 0) continue;
+        if (fd < 0)
+            continue;
 
         /* Get device name */
         char name[256] = "Unknown";
@@ -254,9 +274,8 @@ int rexos_scan_input_devices(char devices[][64], int max_devices)
         close(fd);
 
         /* Check if it's a game controller */
-        if (strstr(name, "Gamepad") || strstr(name, "Controller") ||
-            strstr(name, "Joystick") || strstr(name, "gamepad") ||
-            strstr(name, "joypad")) {
+        if (strstr(name, "Gamepad") || strstr(name, "Controller") || strstr(name, "Joystick") ||
+            strstr(name, "gamepad") || strstr(name, "joypad")) {
             snprintf(devices[count], 64, "%s: %s", path, name);
             count++;
         }

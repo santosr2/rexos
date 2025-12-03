@@ -63,7 +63,7 @@ impl CpuGovernor {
     }
 
     /// Parse from string
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.trim() {
             "performance" => Some(CpuGovernor::Performance),
             "powersave" => Some(CpuGovernor::Powersave),
@@ -157,16 +157,19 @@ impl PowerManager {
     /// Get battery information
     pub fn get_battery_info(&self) -> Result<BatteryInfo, DeviceError> {
         // Read capacity (percentage)
-        let percentage = self.read_sysfs_int(&self.battery_path.join("capacity"))
+        let percentage = self
+            .read_sysfs_int(&self.battery_path.join("capacity"))
             .unwrap_or(50) as u8;
 
         // Read voltage (in microvolts, convert to volts)
-        let voltage_uv = self.read_sysfs_int(&self.battery_path.join("voltage_now"))
+        let voltage_uv = self
+            .read_sysfs_int(&self.battery_path.join("voltage_now"))
             .unwrap_or(3700000);
         let voltage = voltage_uv as f32 / 1_000_000.0;
 
         // Read current (in microamps, convert to amps)
-        let current_ua = self.read_sysfs_int(&self.battery_path.join("current_now"))
+        let current_ua = self
+            .read_sysfs_int(&self.battery_path.join("current_now"))
             .unwrap_or(0);
         let current = current_ua as f32 / 1_000_000.0;
 
@@ -193,7 +196,8 @@ impl PowerManager {
         };
 
         // Read temperature (in tenths of degree celsius)
-        let temp_raw = self.read_sysfs_int(&self.battery_path.join("temp"))
+        let temp_raw = self
+            .read_sysfs_int(&self.battery_path.join("temp"))
             .unwrap_or(250);
         let temperature = temp_raw as f32 / 10.0;
 
@@ -255,7 +259,7 @@ impl PowerManager {
         let path = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
         fs::read_to_string(path)
             .ok()
-            .and_then(|s| CpuGovernor::from_str(&s))
+            .and_then(|s| CpuGovernor::parse(&s))
     }
 
     /// Set CPU governor for all CPUs
@@ -266,13 +270,12 @@ impl PowerManager {
             let entry = entry?;
             let name = entry.file_name().to_string_lossy().to_string();
 
-            if name.starts_with("cpu") && name.chars().nth(3).map_or(false, |c| c.is_ascii_digit()) {
+            if name.starts_with("cpu") && name.chars().nth(3).is_some_and(|c| c.is_ascii_digit()) {
                 let governor_path = entry.path().join("cpufreq/scaling_governor");
                 if governor_path.exists() {
-                    fs::write(&governor_path, governor.as_str())
-                        .map_err(|e| DeviceError::InitializationFailed(
-                            format!("Failed to set governor: {}", e)
-                        ))?;
+                    fs::write(&governor_path, governor.as_str()).map_err(|e| {
+                        DeviceError::InitializationFailed(format!("Failed to set governor: {}", e))
+                    })?;
                 }
             }
         }
@@ -287,7 +290,7 @@ impl PowerManager {
         if let Ok(contents) = fs::read_to_string(path) {
             return contents
                 .split_whitespace()
-                .filter_map(CpuGovernor::from_str)
+                .filter_map(CpuGovernor::parse)
                 .collect();
         }
         vec![]
@@ -311,9 +314,7 @@ impl PowerManager {
 
         if result.is_err() {
             // Fallback to systemctl
-            let _ = Command::new("systemctl")
-                .arg("suspend")
-                .output();
+            let _ = Command::new("systemctl").arg("suspend").output();
         }
 
         Ok(())
@@ -323,9 +324,7 @@ impl PowerManager {
     pub fn shutdown(&self) -> Result<(), DeviceError> {
         tracing::info!("Shutting down system...");
 
-        let _ = Command::new("shutdown")
-            .args(["-h", "now"])
-            .output();
+        let _ = Command::new("shutdown").args(["-h", "now"]).output();
 
         Ok(())
     }
@@ -334,8 +333,7 @@ impl PowerManager {
     pub fn reboot(&self) -> Result<(), DeviceError> {
         tracing::info!("Rebooting system...");
 
-        let _ = Command::new("reboot")
-            .output();
+        let _ = Command::new("reboot").output();
 
         Ok(())
     }
@@ -380,7 +378,10 @@ mod tests {
 
     #[test]
     fn test_cpu_governor_from_str() {
-        assert_eq!(CpuGovernor::from_str("performance"), Some(CpuGovernor::Performance));
-        assert_eq!(CpuGovernor::from_str("invalid"), None);
+        assert_eq!(
+            CpuGovernor::parse("performance"),
+            Some(CpuGovernor::Performance)
+        );
+        assert_eq!(CpuGovernor::parse("invalid"), None);
     }
 }

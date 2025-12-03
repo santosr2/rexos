@@ -3,18 +3,19 @@
  */
 
 #include "emulator_bridge.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <errno.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
 #include <sys/resource.h>
-#include <sched.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 
 /* Global state */
 static bool g_initialized = false;
@@ -26,27 +27,36 @@ static bool g_initialized = false;
 const char* rexos_strerror(rexos_error_t err)
 {
     switch (err) {
-        case REXOS_OK:               return "Success";
-        case REXOS_ERR_INVALID_ARG:  return "Invalid argument";
-        case REXOS_ERR_NOT_FOUND:    return "Not found";
-        case REXOS_ERR_PERMISSION:   return "Permission denied";
-        case REXOS_ERR_FORK_FAILED:  return "Fork failed";
-        case REXOS_ERR_EXEC_FAILED:  return "Exec failed";
-        case REXOS_ERR_TIMEOUT:      return "Timeout";
-        case REXOS_ERR_MEMORY:       return "Memory allocation failed";
-        case REXOS_ERR_IO:           return "I/O error";
-        case REXOS_ERR_INTERNAL:     return "Internal error";
-        default:                      return "Unknown error";
+        case REXOS_OK:
+            return "Success";
+        case REXOS_ERR_INVALID_ARG:
+            return "Invalid argument";
+        case REXOS_ERR_NOT_FOUND:
+            return "Not found";
+        case REXOS_ERR_PERMISSION:
+            return "Permission denied";
+        case REXOS_ERR_FORK_FAILED:
+            return "Fork failed";
+        case REXOS_ERR_EXEC_FAILED:
+            return "Exec failed";
+        case REXOS_ERR_TIMEOUT:
+            return "Timeout";
+        case REXOS_ERR_MEMORY:
+            return "Memory allocation failed";
+        case REXOS_ERR_IO:
+            return "I/O error";
+        case REXOS_ERR_INTERNAL:
+            return "Internal error";
+        default:
+            return "Unknown error";
     }
 }
 
 const char* rexos_version(void)
 {
     static char version[32];
-    snprintf(version, sizeof(version), "%d.%d.%d",
-             REXOS_BRIDGE_VERSION_MAJOR,
-             REXOS_BRIDGE_VERSION_MINOR,
-             REXOS_BRIDGE_VERSION_PATCH);
+    snprintf(version, sizeof(version), "%d.%d.%d", REXOS_BRIDGE_VERSION_MAJOR,
+             REXOS_BRIDGE_VERSION_MINOR, REXOS_BRIDGE_VERSION_PATCH);
     return version;
 }
 
@@ -78,7 +88,8 @@ void rexos_cleanup(void)
 
 void rexos_launch_config_init(rexos_launch_config_t* config)
 {
-    if (!config) return;
+    if (!config)
+        return;
 
     memset(config, 0, sizeof(*config));
     config->type = REXOS_EMU_RETROARCH;
@@ -93,21 +104,25 @@ void rexos_launch_config_init(rexos_launch_config_t* config)
 
 int rexos_launch_config_add_arg(rexos_launch_config_t* config, const char* arg)
 {
-    if (!config || !arg) return -1;
-    if (config->arg_count >= REXOS_MAX_ARGS - 1) return -1;
+    if (!config || !arg)
+        return -1;
+    if (config->arg_count >= REXOS_MAX_ARGS - 1)
+        return -1;
 
     config->args[config->arg_count] = strdup(arg);
-    if (!config->args[config->arg_count]) return -1;
+    if (!config->args[config->arg_count])
+        return -1;
 
     config->arg_count++;
     return 0;
 }
 
-int rexos_launch_config_add_env(rexos_launch_config_t* config,
-                                 const char* key, const char* value)
+int rexos_launch_config_add_env(rexos_launch_config_t* config, const char* key, const char* value)
 {
-    if (!config || !key || !value) return -1;
-    if (config->env_count >= REXOS_MAX_ENV) return -1;
+    if (!config || !key || !value)
+        return -1;
+    if (config->env_count >= REXOS_MAX_ENV)
+        return -1;
 
     strncpy(config->env[config->env_count].key, key,
             sizeof(config->env[config->env_count].key) - 1);
@@ -158,7 +173,8 @@ static char** build_argv(const rexos_launch_config_t* config)
     int argc = 0;
     int max_args = 32 + config->arg_count;
     char** argv = calloc(max_args, sizeof(char*));
-    if (!argv) return NULL;
+    if (!argv)
+        return NULL;
 
     /* Executable */
     argv[argc++] = strdup(config->executable);
@@ -212,7 +228,8 @@ static char** build_argv(const rexos_launch_config_t* config)
 
 static void free_argv(char** argv)
 {
-    if (!argv) return;
+    if (!argv)
+        return;
     for (int i = 0; argv[i]; i++) {
         free(argv[i]);
     }
@@ -345,18 +362,29 @@ rexos_error_t rexos_get_process_info(pid_t pid, rexos_process_info_t* info)
     unsigned long utime, stime, vsize;
     long rss;
 
-    fscanf(f, "%*d %*s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
+    fscanf(f,
+           "%*d %*s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
            "%lu %lu %*d %*d %*d %*d %*d %*d %*u %lu %ld",
            &state, &utime, &stime, &vsize, &rss);
     fclose(f);
 
     /* Parse state */
     switch (state) {
-        case 'R': info->state = REXOS_PROC_RUNNING; break;
-        case 'S': info->state = REXOS_PROC_SLEEPING; break;
-        case 'T': info->state = REXOS_PROC_STOPPED; break;
-        case 'Z': info->state = REXOS_PROC_ZOMBIE; break;
-        default:  info->state = REXOS_PROC_UNKNOWN; break;
+        case 'R':
+            info->state = REXOS_PROC_RUNNING;
+            break;
+        case 'S':
+            info->state = REXOS_PROC_SLEEPING;
+            break;
+        case 'T':
+            info->state = REXOS_PROC_STOPPED;
+            break;
+        case 'Z':
+            info->state = REXOS_PROC_ZOMBIE;
+            break;
+        default:
+            info->state = REXOS_PROC_UNKNOWN;
+            break;
     }
 
     /* Calculate CPU time (in milliseconds) */
@@ -407,7 +435,8 @@ rexos_error_t rexos_kill(pid_t pid)
 static int read_int_from_file(const char* path)
 {
     FILE* f = fopen(path, "r");
-    if (!f) return -1;
+    if (!f)
+        return -1;
 
     int value;
     if (fscanf(f, "%d", &value) != 1) {

@@ -1,8 +1,6 @@
 //! WiFi management using wpa_supplicant
 
 use crate::NetworkError;
-use std::collections::HashMap;
-use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -91,14 +89,20 @@ pub struct WifiStatus {
 /// Manages WiFi connections
 pub struct WifiManager {
     interface: String,
+    #[allow(dead_code)]
     wpa_socket: PathBuf,
+    #[allow(dead_code)]
     wpa_config: PathBuf,
     available: bool,
 }
 
 impl WifiManager {
     /// Create a new WiFi manager
-    pub fn new(interface: String, wpa_socket: PathBuf, wpa_config: PathBuf) -> Result<Self, NetworkError> {
+    pub fn new(
+        interface: String,
+        wpa_socket: PathBuf,
+        wpa_config: PathBuf,
+    ) -> Result<Self, NetworkError> {
         let available = Self::check_available(&interface);
 
         Ok(Self {
@@ -183,7 +187,7 @@ impl WifiManager {
                     frequency,
                     security: WifiSecurity::from_flags(flags),
                     saved: self.is_network_saved(&ssid),
-                    connected: current_ssid.as_ref().map_or(false, |s| s == &ssid),
+                    connected: current_ssid.as_ref() == Some(&ssid),
                 };
 
                 networks.push(network);
@@ -301,7 +305,8 @@ impl WifiManager {
 
     /// Check if connected
     pub fn is_connected(&self) -> bool {
-        self.status().map_or(false, |s| s.state == ConnectionState::Connected)
+        self.status()
+            .is_ok_and(|s| s.state == ConnectionState::Connected)
     }
 
     /// Get current IP address
@@ -397,16 +402,17 @@ impl WifiManager {
 
     /// Get signal strength of current connection
     pub fn get_signal_strength(&self) -> Option<i32> {
-        let output = self.run_command("iw", &["dev", &self.interface, "link"]).ok()?;
+        let output = self
+            .run_command("iw", &["dev", &self.interface, "link"])
+            .ok()?;
 
         for line in output.lines() {
-            if line.contains("signal:") {
-                if let Some(signal_str) = line.split_whitespace().nth(1) {
-                    if let Ok(signal) = signal_str.parse::<i32>() {
-                        // Convert dBm to percentage
-                        return Some(((signal + 100) * 2).clamp(0, 100));
-                    }
-                }
+            if line.contains("signal:")
+                && let Some(signal_str) = line.split_whitespace().nth(1)
+                && let Ok(signal) = signal_str.parse::<i32>()
+            {
+                // Convert dBm to percentage
+                return Some(((signal + 100) * 2).clamp(0, 100));
             }
         }
 
@@ -420,7 +426,10 @@ mod tests {
 
     #[test]
     fn test_security_from_flags() {
-        assert_eq!(WifiSecurity::from_flags("[WPA2-PSK-CCMP]"), WifiSecurity::WPA2);
+        assert_eq!(
+            WifiSecurity::from_flags("[WPA2-PSK-CCMP]"),
+            WifiSecurity::WPA2
+        );
         assert_eq!(WifiSecurity::from_flags("[WPA-PSK]"), WifiSecurity::WPA);
         assert_eq!(WifiSecurity::from_flags("[ESS]"), WifiSecurity::Open);
     }

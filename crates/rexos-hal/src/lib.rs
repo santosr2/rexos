@@ -18,7 +18,7 @@
 //!     // Auto-detect device
 //!     let device = Device::detect()?;
 //!     println!("Detected: {}", device.profile().name);
-//!     
+//!
 //!     // Get device capabilities
 //!     let profile = device.profile();
 //!     println!("Resolution: {}x{}", profile.display.width, profile.display.height);
@@ -26,17 +26,19 @@
 //! }
 //! ```
 
+pub mod audio;
 pub mod device;
 pub mod display;
 pub mod input;
-pub mod audio;
 pub mod power;
 
-pub use device::{Device, DeviceProfile, DeviceError, SystemInfo, DisplaySpec};
-pub use display::{Display, DisplayConfig, Rotation, BacklightInfo};
-pub use input::{InputManager, Button, AnalogStick, InputState, InputDevice, InputEvent};
-pub use audio::{AudioManager, AudioConfig, HeadphoneState, AudioProfile};
-pub use power::{PowerManager, PowerConfig, BatteryInfo, BatteryStatus, BatteryHealth, CpuGovernor};
+pub use audio::{AudioConfig, AudioManager, AudioProfile, HeadphoneState};
+pub use device::{Device, DeviceError, DeviceProfile, DisplaySpec, SystemInfo};
+pub use display::{BacklightInfo, Display, DisplayConfig, Rotation};
+pub use input::{AnalogStick, Button, InputDevice, InputEvent, InputManager, InputState};
+pub use power::{
+    BatteryHealth, BatteryInfo, BatteryStatus, CpuGovernor, PowerConfig, PowerManager,
+};
 
 /// HAL Result type
 pub type Result<T> = std::result::Result<T, DeviceError>;

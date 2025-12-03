@@ -163,12 +163,13 @@ impl EmulatorLauncher {
         }
 
         // Determine system
-        let system = config.system.ok_or_else(|| {
-            EmulatorError::ConfigError("Could not determine game system".into())
-        })?;
+        let system = config
+            .system
+            .ok_or_else(|| EmulatorError::ConfigError("Could not determine game system".into()))?;
 
         // Determine core
-        let core_name = config.core
+        let core_name = config
+            .core
             .unwrap_or_else(|| system.default_core().to_string());
 
         // Get paths based on 32/64 bit
@@ -232,9 +233,9 @@ impl EmulatorLauncher {
             core_name
         );
 
-        let child = cmd.spawn().map_err(|e| {
-            EmulatorError::LaunchFailed(format!("Failed to spawn process: {}", e))
-        })?;
+        let child = cmd
+            .spawn()
+            .map_err(|e| EmulatorError::LaunchFailed(format!("Failed to spawn process: {}", e)))?;
 
         let pid = child.id();
 
@@ -253,7 +254,9 @@ impl EmulatorLauncher {
             &self.cores64_dir
         };
 
-        cores_dir.join(format!("{}_libretro.so", core_name)).exists()
+        cores_dir
+            .join(format!("{}_libretro.so", core_name))
+            .exists()
     }
 
     /// List available cores
@@ -288,10 +291,7 @@ impl EmulatorLauncher {
             &self.retroarch64
         };
 
-        let output = Command::new(path)
-            .arg("--version")
-            .output()
-            .ok()?;
+        let output = Command::new(path).arg("--version").output().ok()?;
 
         String::from_utf8(output.stdout)
             .ok()

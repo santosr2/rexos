@@ -14,9 +14,9 @@ mod mount;
 mod partition;
 mod watcher;
 
-pub use mount::{MountManager, MountPoint, MountError};
+pub use mount::{MountError, MountManager, MountPoint};
 pub use partition::{Partition, PartitionInfo, StorageDevice};
-pub use watcher::{StorageWatcher, StorageEvent};
+pub use watcher::{StorageEvent, StorageWatcher};
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -130,7 +130,10 @@ mod tests {
         assert_eq!(paths.system_roms("snes"), PathBuf::from("/roms/snes"));
         assert_eq!(paths.system_roms("psx"), PathBuf::from("/roms/psx"));
         assert_eq!(paths.system_saves("gba"), PathBuf::from("/roms/saves/gba"));
-        assert_eq!(paths.system_saves("snes"), PathBuf::from("/roms/saves/snes"));
+        assert_eq!(
+            paths.system_saves("snes"),
+            PathBuf::from("/roms/saves/snes")
+        );
     }
 
     #[test]
@@ -147,8 +150,10 @@ mod tests {
 
     #[test]
     fn test_paths_with_secondary_sd() {
-        let mut paths = Paths::default();
-        paths.roms2 = Some(PathBuf::from("/roms2"));
+        let paths = Paths {
+            roms2: Some(PathBuf::from("/roms2")),
+            ..Default::default()
+        };
 
         assert!(paths.roms2.is_some());
         assert_eq!(paths.roms2.unwrap(), PathBuf::from("/roms2"));
@@ -158,9 +163,22 @@ mod tests {
     fn test_all_gaming_systems() {
         let paths = Paths::default();
         let systems = [
-            "gba", "gbc", "gb", "nes", "snes", "n64", "nds",
-            "psx", "psp", "sega-md", "sega-cd", "dreamcast",
-            "arcade", "mame", "neogeo", "pce",
+            "gba",
+            "gbc",
+            "gb",
+            "nes",
+            "snes",
+            "n64",
+            "nds",
+            "psx",
+            "psp",
+            "sega-md",
+            "sega-cd",
+            "dreamcast",
+            "arcade",
+            "mame",
+            "neogeo",
+            "pce",
         ];
 
         for system in systems {

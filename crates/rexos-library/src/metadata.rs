@@ -84,6 +84,7 @@ impl GameMetadata {
 }
 
 /// Parse gamelist.xml format (EmulationStation compatible)
+#[allow(dead_code)]
 pub fn parse_gamelist_xml(xml: &str) -> Vec<(String, GameMetadata)> {
     let mut games = Vec::new();
 
@@ -135,6 +136,7 @@ pub fn parse_gamelist_xml(xml: &str) -> Vec<(String, GameMetadata)> {
 }
 
 /// Extract value from simple XML tag
+#[allow(dead_code)]
 fn extract_xml_value(line: &str, tag: &str) -> Option<String> {
     let open_tag = format!("<{}>", tag);
     let close_tag = format!("</{}>", tag);

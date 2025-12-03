@@ -206,7 +206,9 @@ impl DeviceProfileConfig {
                 battery_path: "/sys/class/power_supply/battery".to_string(),
                 charger_path: "/sys/class/power_supply/ac".to_string(),
                 governor_path: "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor".to_string(),
-                cpu_frequencies: vec![408000, 600000, 816000, 1008000, 1200000, 1416000, 1608000, 1800000],
+                cpu_frequencies: vec![
+                    408000, 600000, 816000, 1008000, 1200000, 1416000, 1608000, 1800000,
+                ],
                 sleep_support: true,
             },
             quirks: vec![],
@@ -300,7 +302,9 @@ impl DeviceProfileConfig {
                 battery_path: "/sys/class/power_supply/battery".to_string(),
                 charger_path: "/sys/class/power_supply/usb".to_string(),
                 governor_path: "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor".to_string(),
-                cpu_frequencies: vec![408000, 600000, 816000, 1008000, 1200000, 1416000, 1608000, 1800000],
+                cpu_frequencies: vec![
+                    408000, 600000, 816000, 1008000, 1200000, 1416000, 1608000, 1800000,
+                ],
                 sleep_support: true,
             },
             quirks: vec!["square_display".to_string()],
@@ -309,7 +313,9 @@ impl DeviceProfileConfig {
 }
 
 /// Load device profiles from configuration directory
-pub fn load_device_profiles(config_dir: &Path) -> Result<HashMap<String, DeviceProfileConfig>, ConfigError> {
+pub fn load_device_profiles(
+    config_dir: &Path,
+) -> Result<HashMap<String, DeviceProfileConfig>, ConfigError> {
     let profiles_dir = config_dir.join("devices");
     let mut profiles = HashMap::new();
 
@@ -325,7 +331,7 @@ pub fn load_device_profiles(config_dir: &Path) -> Result<HashMap<String, DeviceP
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().map_or(false, |e| e == "toml") {
+            if path.extension().is_some_and(|e| e == "toml") {
                 let contents = std::fs::read_to_string(&path)?;
                 let profile: DeviceProfileConfig = toml::from_str(&contents)?;
                 profiles.insert(profile.id.clone(), profile);

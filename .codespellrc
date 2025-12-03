@@ -1,0 +1,22 @@
+# Codespell configuration
+# https://github.com/codespell-project/codespell
+
+[codespell]
+# Skip these directories and files
+skip = .git,target,vendor,node_modules,dist,*.lock,Cargo.lock,package-lock.json,*.min.js,*.min.css
+
+# Ignore these words (comma-separated)
+ignore-words-list = crate,crates,ines,ser,te,nd,fo,ratatui,gameboy
+
+# Only check these file types (leave empty for all)
+# check-filenames =
+# check-hidden =
+
+# Write corrections (disabled by default, enable with -w)
+# write-changes = false
+
+# Interactive mode (disabled)
+interactive = 0
+
+# Quiet mode (less output)
+quiet-level = 2

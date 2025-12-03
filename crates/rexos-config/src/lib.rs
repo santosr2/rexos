@@ -9,9 +9,9 @@ mod hotkeys;
 mod system_config;
 
 pub use device_profiles::{DeviceProfileConfig, load_device_profiles};
-pub use emulator_config::{EmulatorConfig, CoreConfig, SystemConfig as EmulatorSystemConfig};
-pub use hotkeys::{HotkeyConfig, Hotkey, HotkeyAction};
-pub use system_config::{SystemConfig, PerformanceProfile, NetworkConfig};
+pub use emulator_config::{CoreConfig, EmulatorConfig, SystemConfig as EmulatorSystemConfig};
+pub use hotkeys::{Hotkey, HotkeyAction, HotkeyConfig};
+pub use system_config::{NetworkConfig, PerformanceProfile, SystemConfig};
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -43,7 +43,7 @@ pub const CONFIG_DIR: &str = "/etc/rexos";
 pub const USER_CONFIG_DIR: &str = "/roms/.rexos";
 
 /// Main RexOS configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RexOSConfig {
     #[serde(default)]
     pub system: SystemConfig,
@@ -53,16 +53,6 @@ pub struct RexOSConfig {
 
     #[serde(default)]
     pub emulators: EmulatorConfig,
-}
-
-impl Default for RexOSConfig {
-    fn default() -> Self {
-        Self {
-            system: SystemConfig::default(),
-            hotkeys: HotkeyConfig::default(),
-            emulators: EmulatorConfig::default(),
-        }
-    }
 }
 
 impl RexOSConfig {
@@ -138,7 +128,8 @@ mod tests {
     fn test_default_config() {
         let config = RexOSConfig::default();
         assert!(config.system.brightness > 0);
-        assert!(config.system.volume >= 0);
+        // Volume is u8, so it's always >= 0
+        assert!(config.system.volume <= 100);
     }
 
     #[test]

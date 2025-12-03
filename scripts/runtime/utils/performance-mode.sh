@@ -27,37 +27,37 @@ get_current_mode() {
 
 set_powersave_mode() {
     log_info "Setting powersave mode..."
-    
+
     # Set CPU governor
     if [[ -f "$CPU_GOVERNOR_PATH" ]]; then
         echo "powersave" > "$CPU_GOVERNOR_PATH" 2>/dev/null || log_error "Failed to set CPU governor"
     fi
-    
+
     # Additional power saving measures
     # TODO: Implement brightness reduction, GPU throttling, etc.
-    
+
     echo "powersave" > "$CURRENT_MODE_FILE"
     log_info "Powersave mode enabled - Maximum battery life"
 }
 
 set_balanced_mode() {
     log_info "Setting balanced mode..."
-    
+
     if [[ -f "$CPU_GOVERNOR_PATH" ]]; then
         echo "ondemand" > "$CPU_GOVERNOR_PATH" 2>/dev/null || log_error "Failed to set CPU governor"
     fi
-    
+
     echo "balanced" > "$CURRENT_MODE_FILE"
     log_info "Balanced mode enabled - Optimal performance/battery balance"
 }
 
 set_performance_mode() {
     log_info "Setting performance mode..."
-    
+
     if [[ -f "$CPU_GOVERNOR_PATH" ]]; then
         echo "performance" > "$CPU_GOVERNOR_PATH" 2>/dev/null || log_error "Failed to set CPU governor"
     fi
-    
+
     echo "performance" > "$CURRENT_MODE_FILE"
     log_info "Performance mode enabled - Maximum performance"
 }
@@ -65,7 +65,7 @@ set_performance_mode() {
 show_status() {
     local current_mode
     current_mode=$(get_current_mode)
-    
+
     echo "Current Performance Mode: $current_mode"
     echo ""
     echo "Available modes:"
@@ -85,7 +85,7 @@ Modes:
     balanced      - Enable balanced mode (default)
     performance   - Enable performance mode
     status        - Show current mode
-    
+
 Options:
     -h, --help    - Show this help message
 
@@ -101,7 +101,7 @@ main() {
         show_status
         exit 0
     fi
-    
+
     case "$1" in
         powersave)
             set_powersave_mode
