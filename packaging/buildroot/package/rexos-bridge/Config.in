@@ -1,0 +1,6 @@
+config BR2_PACKAGE_REXOS_BRIDGE
+	bool "rexos-bridge"
+	help
+	  RexOS C emulator bridge library for RetroArch integration.
+
+	  https://github.com/santosr2/rexos

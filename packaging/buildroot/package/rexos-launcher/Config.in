@@ -1,0 +1,7 @@
+config BR2_PACKAGE_REXOS_LAUNCHER
+	bool "rexos-launcher"
+	select BR2_PACKAGE_REXOS_CORE
+	help
+	  RexOS TUI game launcher application.
+
+	  https://github.com/santosr2/rexos

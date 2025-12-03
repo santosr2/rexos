@@ -1,59 +1,70 @@
 [workspace]
 members = [
-    "core/hal",
-    "core/storage",
-    "core/config",
-    "services/emulator",
-    "services/library",
-    # Future modules:
-    # "services/update",
-    # "services/network",
+    "crates/rexos-hal",
+    "crates/rexos-storage",
+    "crates/rexos-config",
+    "crates/rexos-emulator",
+    "crates/rexos-library",
+    "crates/rexos-update",
+    "crates/rexos-network",
+    "crates/rexos-init",
+    "crates/rexos-launcher",
 ]
 
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"
 license = "MIT"
 authors = ["RexOS Contributors"]
 repository = "https://github.com/santosr2/rexos"
 
 [workspace.dependencies]
-# Async runtime
-tokio = { version = "1.35", features = ["full"] }
+# Async runtime - latest stable
+tokio = { version = "1", features = ["full"] }
 
-# Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+# Serialization - latest stable
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 toml = "0.8"
 
-# Logging
+# Logging - latest stable
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
-# Error handling
-anyhow = "1.0"
-thiserror = "1.0"
+# Error handling - latest stable
+anyhow = "1"
+thiserror = "2"
 
-# Hardware interfaces
-nix = "0.27"
+# Hardware interfaces - latest stable
+nix = { version = "0.29", features = ["signal", "mount", "fs", "process"] }
 libc = "0.2"
 
 # Configuration
-config = "0.13"
+config = "0.14"
 
-# Database (for game library)
-rusqlite = { version = "0.30", features = ["bundled"] }
+# Database (for game library) - latest stable
+rusqlite = { version = "0.32", features = ["bundled"] }
 
-# HTTP client (for scrapers/updates)
-reqwest = { version = "0.11", features = ["json"] }
+# HTTP client (for scrapers/updates) - latest stable
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 
-# File watching
-notify = "6.1"
+# File watching - latest stable
+notify = "7"
 
 # Command execution
-which = "5.0"
+which = "7"
+
+# Async streams
+futures-util = "0.3"
+
+# Semver parsing
+semver = "1"
+
+# Random number generation
+rand = "0.8"
 
 [profile.release]
 opt-level = 3

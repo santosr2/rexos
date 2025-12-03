@@ -1,0 +1,364 @@
+# mise.toml - Tool and language management for RexOS
+# Install mise: https://mise.jdx.dev/getting-started.html
+# Run: mise install
+
+[env]
+# Rust settings
+CARGO_TERM_COLOR = "always"
+RUST_BACKTRACE = "1"
+
+# Cross-compilation settings
+CROSS_CONTAINER_ENGINE = "docker"
+
+[tools]
+# Rust toolchain - latest stable (2024 edition support)
+rust = "latest"
+
+# Python for Buildroot and scripts - latest 3.x
+python = "latest"
+
+# Node.js LTS for tooling
+node = "lts"
+
+# Shell script linting - latest versions
+shfmt = "latest"
+shellcheck = "latest"
+
+# YAML/JSON tools - latest versions
+yq = "latest"
+jq = "latest"
+
+# Pre-commit for git hooks
+pre-commit = "latest"
+
+# Cross-compilation helper
+cross = "latest"
+
+# C/C++ tooling (for emulator bridge)
+cmake = "latest"
+
+[tasks.setup]
+description = "Initial project setup"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔧 Setting up RexOS development environment..."
+
+# Install Rust targets for cross-compilation
+echo "📦 Installing Rust cross-compilation targets..."
+rustup target add aarch64-unknown-linux-gnu
+rustup target add armv7-unknown-linux-gnueabihf
+
+# Install Rust components
+echo "📦 Installing Rust components..."
+rustup component add rustfmt clippy rust-analyzer
+
+# Install cargo tools
+echo "📦 Installing Cargo tools..."
+cargo install cargo-watch cargo-audit cargo-outdated cargo-deny 2>/dev/null || true
+
+# Setup pre-commit hooks
+echo "🪝 Setting up pre-commit hooks..."
+pre-commit install
+
+# Create necessary directories
+echo "📁 Creating project directories..."
+mkdir -p config/retroarch
+mkdir -p docs/dev
+
+echo "✅ Setup complete!"
+"""
+
+[tasks.build]
+description = "Build all workspace members"
+run = "cargo build"
+
+[tasks.build-release]
+description = "Build release binaries"
+run = "cargo build --release"
+
+[tasks.test]
+description = "Run all tests"
+run = "cargo test"
+
+[tasks.test-verbose]
+description = "Run tests with output"
+run = "cargo test -- --nocapture"
+
+[tasks.lint]
+description = "Run all linters"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔍 Running Rust formatter check..."
+cargo fmt -- --check
+
+echo "🔍 Running Clippy..."
+cargo clippy -- -D warnings
+
+echo "🔍 Running shell script checks..."
+if command -v shellcheck &> /dev/null; then
+    find scripts -name "*.sh" -exec shellcheck {} +
+fi
+
+if command -v shfmt &> /dev/null; then
+    shfmt -d scripts/
+fi
+
+echo "✅ All lints passed!"
+"""
+
+[tasks.fmt]
+description = "Format all code"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "📝 Formatting Rust code..."
+cargo fmt
+
+echo "📝 Formatting shell scripts..."
+if command -v shfmt &> /dev/null; then
+    shfmt -w scripts/
+fi
+
+echo "✅ Formatting complete!"
+"""
+
+[tasks.check]
+description = "Quick compilation check"
+run = "cargo check"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "cargo clean"
+
+[tasks.watch]
+description = "Watch for changes and rebuild"
+run = "cargo watch -x check -x test"
+
+[tasks.audit]
+description = "Security audit dependencies"
+run = "cargo audit"
+
+[tasks.outdated]
+description = "Check for outdated dependencies"
+run = "cargo outdated"
+
+[tasks.doc]
+description = "Generate documentation"
+run = "cargo doc --no-deps --open"
+
+[tasks.cross-arm64]
+description = "Cross-compile for aarch64 (RG353)"
+run = "cross build --target aarch64-unknown-linux-gnu --release"
+
+[tasks.cross-armv7]
+description = "Cross-compile for armv7 (RG35XX)"
+run = "cross build --target armv7-unknown-linux-gnueabihf --release"
+
+[tasks.cross-all]
+description = "Cross-compile for all targets"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔨 Building for aarch64 (RG353, RGB30, RG503)..."
+cross build --target aarch64-unknown-linux-gnu --release
+
+echo "🔨 Building for armv7 (RG35XX)..."
+cross build --target armv7-unknown-linux-gnueabihf --release
+
+echo "✅ Cross-compilation complete!"
+echo ""
+echo "Binaries available at:"
+echo "  - target/aarch64-unknown-linux-gnu/release/"
+echo "  - target/armv7-unknown-linux-gnueabihf/release/"
+"""
+
+[tasks.pre-commit]
+description = "Run pre-commit on all files"
+run = "pre-commit run --all-files"
+
+[tasks.c-bridge]
+description = "Build C emulator bridge"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -d "c/emulator-bridge" ]; then
+    echo "🔨 Building C emulator bridge..."
+    cd c/emulator-bridge
+    make clean && make
+    echo "✅ C bridge built!"
+else
+    echo "⚠️ C emulator bridge directory not found"
+fi
+"""
+
+[tasks.buildroot-config]
+description = "Configure Buildroot for RG353"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUILDROOT_DIR="${BUILDROOT_DIR:-../buildroot}"
+
+if [ ! -d "$BUILDROOT_DIR" ]; then
+    echo "📥 Cloning Buildroot..."
+    git clone --depth 1 https://github.com/buildroot/buildroot.git "$BUILDROOT_DIR"
+fi
+
+echo "⚙️ Configuring Buildroot with RexOS external tree..."
+cd "$BUILDROOT_DIR"
+make BR2_EXTERNAL="$(pwd)/../rexos/packaging/buildroot" rg353_defconfig
+
+echo "✅ Buildroot configured!"
+echo "Run 'mise run buildroot-build' to build the full image"
+"""
+
+[tasks.buildroot-build]
+description = "Build full OS image with Buildroot"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUILDROOT_DIR="${BUILDROOT_DIR:-../buildroot}"
+
+if [ ! -d "$BUILDROOT_DIR" ]; then
+    echo "❌ Buildroot not configured. Run 'mise run buildroot-config' first."
+    exit 1
+fi
+
+echo "🔨 Building RexOS image (this may take a while)..."
+cd "$BUILDROOT_DIR"
+make -j$(nproc)
+
+echo "✅ Build complete!"
+echo "SD card image: $BUILDROOT_DIR/output/images/sdcard.img"
+"""
+
+[tasks.qemu-test]
+description = "Run binaries in QEMU (requires qemu-user)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+BINARY="${1:-rexos-launcher}"
+TARGET="aarch64-unknown-linux-gnu"
+
+if [ ! -f "target/$TARGET/release/$BINARY" ]; then
+    echo "❌ Binary not found. Run 'mise run cross-arm64' first."
+    exit 1
+fi
+
+echo "🚀 Running $BINARY in QEMU..."
+qemu-aarch64 -L /usr/aarch64-linux-gnu "target/$TARGET/release/$BINARY"
+"""
+
+[tasks.flash-sd]
+description = "Flash SD card image (requires sudo)"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUILDROOT_DIR="${BUILDROOT_DIR:-../buildroot}"
+IMAGE="$BUILDROOT_DIR/output/images/sdcard.img"
+
+if [ ! -f "$IMAGE" ]; then
+    echo "❌ SD card image not found. Run 'mise run buildroot-build' first."
+    exit 1
+fi
+
+echo "Available disks:"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    diskutil list
+else
+    lsblk
+fi
+
+echo ""
+read -p "Enter target device (e.g., /dev/disk2 or /dev/sdb): " DEVICE
+
+if [ -z "$DEVICE" ]; then
+    echo "❌ No device specified"
+    exit 1
+fi
+
+echo "⚠️ WARNING: This will ERASE all data on $DEVICE"
+read -p "Are you sure? (yes/no): " CONFIRM
+
+if [ "$CONFIRM" != "yes" ]; then
+    echo "Aborted."
+    exit 1
+fi
+
+echo "📝 Flashing image to $DEVICE..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    diskutil unmountDisk "$DEVICE"
+    sudo dd if="$IMAGE" of="$DEVICE" bs=4m status=progress
+    diskutil eject "$DEVICE"
+else
+    sudo dd if="$IMAGE" of="$DEVICE" bs=4M status=progress conv=fsync
+    sync
+fi
+
+echo "✅ Flash complete! You can now insert the SD card into your device."
+"""
+
+[tasks.ci]
+description = "Run full CI pipeline locally"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔄 Running CI pipeline..."
+
+echo ""
+echo "Step 1/5: Format check"
+cargo fmt -- --check
+
+echo ""
+echo "Step 2/5: Clippy"
+cargo clippy -- -D warnings
+
+echo ""
+echo "Step 3/5: Build"
+cargo build --release
+
+echo ""
+echo "Step 4/5: Tests"
+cargo test
+
+echo ""
+echo "Step 5/5: Security audit"
+cargo audit || echo "⚠️ Audit warnings (non-blocking)"
+
+echo ""
+echo "✅ CI pipeline passed!"
+"""
+
+[tasks.dev]
+description = "Start development mode (watch + test)"
+run = "cargo watch -x 'check' -x 'test' -x 'clippy'"
+
+[tasks.info]
+description = "Show project information"
+run = """
+#!/usr/bin/env bash
+
+echo "RexOS Development Environment"
+echo "=============================="
+echo ""
+echo "Rust version: $(rustc --version)"
+echo "Cargo version: $(cargo --version)"
+echo "Cross version: $(cross --version 2>/dev/null || echo 'not installed')"
+echo ""
+echo "Installed targets:"
+rustup target list --installed
+echo ""
+echo "Workspace members:"
+cargo metadata --format-version 1 --no-deps | jq -r '.packages[].name'
+"""

@@ -41,3 +41,5 @@ buildroot/dl/
 *.pem
 *.key
 secrets/
+
+testing.md

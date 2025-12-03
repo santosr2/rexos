@@ -1,0 +1,9 @@
+# RexOS Buildroot Configuration
+
+menu "RexOS packages"
+
+source "$BR2_EXTERNAL_REXOS_PATH/package/rexos-core/Config.in"
+source "$BR2_EXTERNAL_REXOS_PATH/package/rexos-launcher/Config.in"
+source "$BR2_EXTERNAL_REXOS_PATH/package/rexos-bridge/Config.in"
+
+endmenu

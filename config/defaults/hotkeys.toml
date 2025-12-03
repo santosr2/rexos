@@ -1,0 +1,65 @@
+# RexOS Hotkey Configuration
+# Define button combinations for system actions
+
+# Modifier button (held while pressing action button)
+# Options: "select", "start", "l3", "r3", "guide"
+[modifier]
+button = "select"
+timeout_ms = 500
+
+# Game control hotkeys (active during gameplay)
+[game]
+exit = "start"           # SELECT + START = Exit game
+save_state = "r1"        # SELECT + R1 = Save state
+load_state = "l1"        # SELECT + L1 = Load state
+menu = "x"               # SELECT + X = RetroArch menu
+pause = "y"              # SELECT + Y = Pause
+fast_forward = "r2"      # SELECT + R2 = Fast forward (hold)
+screenshot = "l2"        # SELECT + L2 = Screenshot
+state_slot_up = "up"     # SELECT + UP = Next save slot
+state_slot_down = "down" # SELECT + DOWN = Previous save slot
+
+# System control hotkeys (always active)
+[system]
+volume_up = "up"          # SELECT + D-PAD UP = Volume up
+volume_down = "down"      # SELECT + D-PAD DOWN = Volume down
+brightness_up = "right"   # SELECT + D-PAD RIGHT = Brightness up
+brightness_down = "left"  # SELECT + D-PAD LEFT = Brightness down
+wifi_toggle = "a"         # SELECT + A = Toggle WiFi
+bluetooth_toggle = "b"    # SELECT + B = Toggle Bluetooth
+
+# Power button behavior
+[power]
+# Short press action: "sleep", "menu", "nothing"
+short_press = "sleep"
+# Long press duration in milliseconds
+long_press_ms = 3000
+# Long press action: "shutdown", "reboot", "menu"
+long_press = "shutdown"
+
+# Launcher hotkeys (in game browser)
+[launcher]
+search = "y"              # Y = Search games
+options = "x"             # X = Options menu
+refresh = "start"         # START = Refresh library
+settings = "select"       # SELECT = System settings
+
+# Button mapping (Linux input event codes)
+# Reference for customization
+[button_codes]
+a = 304          # BTN_SOUTH / BTN_A
+b = 305          # BTN_EAST / BTN_B
+x = 307          # BTN_NORTH / BTN_X
+y = 308          # BTN_WEST / BTN_Y
+l1 = 310         # BTN_TL
+r1 = 311         # BTN_TR
+l2 = 312         # BTN_TL2
+r2 = 313         # BTN_TR2
+select = 314     # BTN_SELECT
+start = 315      # BTN_START
+l3 = 317         # BTN_THUMBL
+r3 = 318         # BTN_THUMBR
+up = 544         # BTN_DPAD_UP
+down = 545       # BTN_DPAD_DOWN
+left = 546       # BTN_DPAD_LEFT
+right = 547      # BTN_DPAD_RIGHT

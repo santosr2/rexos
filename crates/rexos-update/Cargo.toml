@@ -1,0 +1,41 @@
+[package]
+name = "rexos-update"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "OTA update system for RexOS"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+reqwest = { workspace = true }
+
+# Cryptographic verification
+sha2 = "0.10"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+hex = "0.4"
+rand = "0.8"
+
+# Compression
+flate2 = "1.0"
+tar = "0.4"
+
+# Semver parsing
+semver = "1.0"
+
+# Async streaming
+futures-util = "0.3"
+
+# System calls
+libc = "0.2"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.10"

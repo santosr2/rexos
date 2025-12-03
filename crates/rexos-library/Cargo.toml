@@ -1,0 +1,24 @@
+[package]
+name = "rexos-library"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Game library management service for RexOS"
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+tokio.workspace = true
+rusqlite.workspace = true
+rexos-hal = { path = "../rexos-hal" }
+rexos-config = { path = "../rexos-config" }
+rexos-storage = { path = "../rexos-storage" }
+
+[dev-dependencies]
+tempfile = "3.10"

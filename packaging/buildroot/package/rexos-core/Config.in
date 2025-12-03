@@ -1,0 +1,8 @@
+config BR2_PACKAGE_REXOS_CORE
+	bool "rexos-core"
+	depends on BR2_PACKAGE_HOST_RUSTC
+	help
+	  RexOS core system components including HAL, storage,
+	  config, and service modules.
+
+	  https://github.com/santosr2/rexos

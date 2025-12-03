@@ -1,0 +1,109 @@
+# RexOS System Configuration
+# Default system settings for all devices
+
+[system]
+# Device will be auto-detected at runtime
+# Supported: "rg353m", "rg353v", "rg353vs", "rg35xx", "rg35xxplus", "generic"
+device = "auto"
+
+# System locale
+language = "en"
+timezone = "UTC"
+
+# Logging level: "error", "warn", "info", "debug", "trace"
+log_level = "info"
+
+[display]
+# Brightness (0-100)
+brightness = 70
+
+# Auto-brightness based on ambient light (if sensor available)
+auto_brightness = false
+
+# Screen timeout in seconds (0 = disabled)
+screen_timeout = 300
+
+# Rotation: 0, 90, 180, 270
+rotation = 0
+
+[audio]
+# Master volume (0-100)
+volume = 80
+
+# Mute state
+mute = false
+
+# Audio output: "auto", "speaker", "headphones", "hdmi"
+output = "auto"
+
+[power]
+# Sleep timeout in seconds (0 = disabled)
+sleep_timeout = 600
+
+# Auto power-off timeout in seconds (0 = disabled)
+auto_poweroff = 0
+
+# Low battery warning threshold (%)
+low_battery_warning = 15
+
+# Critical battery threshold (%) - triggers auto-save and shutdown
+critical_battery = 5
+
+# Power button behavior: "sleep", "shutdown", "menu"
+power_button = "sleep"
+
+[performance]
+# Default CPU governor: "powersave", "ondemand", "performance"
+default_governor = "ondemand"
+
+# Governor when running games
+game_governor = "performance"
+
+# GPU frequency scaling
+gpu_scaling = true
+
+[network]
+# Enable WiFi on boot
+wifi_enabled = false
+
+# Enable Bluetooth on boot
+bluetooth_enabled = false
+
+# Hostname for network identification
+hostname = "rexos"
+
+[ui]
+# Theme: "default", "dark", "light", "retro"
+theme = "default"
+
+# Font size: "small", "medium", "large"
+font_size = "medium"
+
+# Show battery percentage
+show_battery_percent = true
+
+# Show clock in header
+show_clock = true
+
+# Animation speed: "off", "fast", "normal", "slow"
+animations = "normal"
+
+[updates]
+# Check for updates automatically
+auto_check = true
+
+# Update channel: "stable", "beta", "nightly"
+channel = "stable"
+
+# Update server URL
+server = "https://updates.rexos.dev"
+
+[advanced]
+# Enable SSH server (requires WiFi)
+ssh_enabled = false
+
+# Enable developer mode (shows debug info, enables ADB)
+developer_mode = false
+
+# Enable verbose boot messages
+verbose_boot = false

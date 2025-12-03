@@ -1,0 +1,26 @@
+[package]
+name = "rexos-init"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "RexOS init system - lightweight PID 1 for retro gaming handhelds"
+
+[[bin]]
+name = "rexos-init"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+nix = { workspace = true }
+libc = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+
+# RexOS libraries
+rexos-hal = { path = "../rexos-hal" }
+rexos-config = { path = "../rexos-config" }

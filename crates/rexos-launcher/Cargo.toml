@@ -1,0 +1,32 @@
+[package]
+name = "rexos-launcher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "RexOS game launcher - TUI frontend for game selection and launching"
+
+[[bin]]
+name = "rexos-launcher"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+nix = { workspace = true }
+
+# TUI framework
+crossterm = "0.27"
+ratatui = "0.26"
+
+# RexOS libraries
+rexos-hal = { path = "../rexos-hal" }
+rexos-config = { path = "../rexos-config" }
+rexos-library = { path = "../rexos-library" }
+rexos-emulator = { path = "../rexos-emulator" }

@@ -1,0 +1,186 @@
+# RexOS Emulator Configuration
+# Settings for emulator launching and per-system defaults
+
+[defaults]
+# Default emulator: "retroarch" or "standalone"
+emulator = "retroarch"
+
+# RetroArch executable path
+retroarch_path = "/usr/bin/retroarch"
+
+# Default video settings
+fullscreen = true
+vsync = true
+integer_scaling = false
+
+# Default audio settings
+audio_sync = true
+audio_latency = 64
+
+# =============================================================================
+# SYSTEM-SPECIFIC SETTINGS
+# =============================================================================
+
+[systems.gb]
+name = "Game Boy"
+extensions = ["gb", "gbc", "sgb"]
+core = "gambatte_libretro.so"
+bios_required = false
+
+[systems.gbc]
+name = "Game Boy Color"
+extensions = ["gbc", "gb"]
+core = "gambatte_libretro.so"
+bios_required = false
+
+[systems.gba]
+name = "Game Boy Advance"
+extensions = ["gba", "agb", "bin"]
+core = "mgba_libretro.so"
+bios = "gba_bios.bin"
+bios_required = false
+
+[systems.nes]
+name = "Nintendo Entertainment System"
+extensions = ["nes", "fds", "unf", "unif"]
+core = "nestopia_libretro.so"
+bios_required = false
+
+[systems.snes]
+name = "Super Nintendo"
+extensions = ["sfc", "smc", "fig", "swc", "bs"]
+core = "snes9x_libretro.so"
+bios_required = false
+
+[systems.n64]
+name = "Nintendo 64"
+extensions = ["n64", "z64", "v64"]
+core = "mupen64plus_next_libretro.so"
+bios_required = false
+# Performance settings for N64
+[systems.n64.performance]
+governor = "performance"
+frameskip = 0
+
+[systems.nds]
+name = "Nintendo DS"
+extensions = ["nds", "dsi"]
+core = "desmume_libretro.so"
+bios = ["bios7.bin", "bios9.bin", "firmware.bin"]
+bios_required = false
+
+[systems.psx]
+name = "PlayStation"
+extensions = ["bin", "cue", "iso", "img", "pbp", "chd", "m3u"]
+core = "pcsx_rearmed_libretro.so"
+bios = "scph1001.bin"
+bios_required = true
+# Alternative BIOS options
+bios_alternatives = ["scph5500.bin", "scph5501.bin", "scph5502.bin", "scph7001.bin"]
+
+[systems.psp]
+name = "PlayStation Portable"
+extensions = ["iso", "cso", "pbp", "elf"]
+core = "ppsspp_libretro.so"
+bios_required = false
+# PSP needs more resources
+[systems.psp.performance]
+governor = "performance"
+
+[systems.sega-md]
+name = "Sega Genesis / Mega Drive"
+extensions = ["md", "gen", "bin", "smd"]
+core = "genesis_plus_gx_libretro.so"
+bios_required = false
+
+[systems.sega-cd]
+name = "Sega CD"
+extensions = ["bin", "cue", "iso", "chd"]
+core = "genesis_plus_gx_libretro.so"
+bios = ["bios_CD_U.bin", "bios_CD_E.bin", "bios_CD_J.bin"]
+bios_required = true
+
+[systems.sega-32x]
+name = "Sega 32X"
+extensions = ["32x", "bin"]
+core = "picodrive_libretro.so"
+bios_required = false
+
+[systems.sega-saturn]
+name = "Sega Saturn"
+extensions = ["bin", "cue", "iso", "chd"]
+core = "beetle_saturn_libretro.so"
+bios = ["sega_101.bin", "mpr-17933.bin"]
+bios_required = true
+
+[systems.dreamcast]
+name = "Sega Dreamcast"
+extensions = ["cdi", "gdi", "chd", "cue"]
+core = "flycast_libretro.so"
+bios = ["dc_boot.bin", "dc_flash.bin"]
+bios_required = true
+[systems.dreamcast.performance]
+governor = "performance"
+
+[systems.arcade]
+name = "Arcade"
+extensions = ["zip", "7z"]
+core = "fbneo_libretro.so"
+bios_required = false
+# ROM set version
+romset = "fba"
+
+[systems.mame]
+name = "MAME"
+extensions = ["zip", "7z"]
+core = "mame2003_plus_libretro.so"
+bios_required = false
+romset = "mame2003"
+
+[systems.neogeo]
+name = "Neo Geo"
+extensions = ["zip", "7z"]
+core = "fbneo_libretro.so"
+bios = "neogeo.zip"
+bios_required = true
+
+[systems.pce]
+name = "PC Engine / TurboGrafx-16"
+extensions = ["pce", "sgx", "cue", "ccd"]
+core = "beetle_pce_libretro.so"
+bios = "syscard3.pce"
+bios_required = true
+
+[systems.scummvm]
+name = "ScummVM"
+extensions = ["scummvm"]
+core = "scummvm_libretro.so"
+bios_required = false
+
+[systems.dos]
+name = "DOS"
+extensions = ["exe", "com", "bat", "dosz"]
+core = "dosbox_pure_libretro.so"
+bios_required = false
+
+# =============================================================================
+# STANDALONE EMULATORS
+# =============================================================================
+
+[standalone.drastic]
+name = "DraStic"
+path = "/opt/drastic/drastic"
+systems = ["nds"]
+args = ["{rom}"]
+
+[standalone.ppsspp]
+name = "PPSSPP Standalone"
+path = "/opt/ppsspp/PPSSPP"
+systems = ["psp"]
+args = ["{rom}"]
+
+[standalone.mupen64plus]
+name = "Mupen64Plus Standalone"
+path = "/opt/mupen64plus/mupen64plus"
+systems = ["n64"]
+args = ["--fullscreen", "{rom}"]

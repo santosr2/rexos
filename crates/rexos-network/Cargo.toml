@@ -1,0 +1,26 @@
+[package]
+name = "rexos-network"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Network management for RexOS (WiFi, Bluetooth)"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+nix = { workspace = true }
+
+# D-Bus for NetworkManager communication
+zbus = "4.0"
+
+# Regex for parsing
+regex = "1.10"
+
+[dev-dependencies]
+tokio-test = "0.4"

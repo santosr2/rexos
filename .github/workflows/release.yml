@@ -1,0 +1,155 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: RexOS ${{ steps.get_version.outputs.version }}
+          body: |
+            ## RexOS ${{ steps.get_version.outputs.version }}
+
+            ### Changes
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+
+            ### Downloads
+            - `rexos-<version>-aarch64.tar.gz` - For RG353 series (64-bit ARM)
+            - `rexos-<version>-armv7.tar.gz` - For RG35XX series (32-bit ARM)
+            - `rexos-<version>-rg353.img.gz` - Ready-to-flash SD card image for RG353
+            - `rexos-<version>-rg35xx.img.gz` - Ready-to-flash SD card image for RG35XX
+
+            ### Installation
+            1. Download the appropriate image for your device
+            2. Flash to an SD card using `dd` or Balena Etcher
+            3. Insert the SD card and power on your device
+
+            ### Verification
+            ```bash
+            sha256sum -c rexos-<version>-<arch>.tar.gz.sha256
+            ```
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+
+  build-release:
+    name: Build Release
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-unknown-linux-gnu
+            name: aarch64
+            profile: rg353
+          - target: armv7-unknown-linux-gnueabihf
+            name: armv7
+            profile: rg35xx
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
+
+      - name: Build Rust
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Build C bridge
+        run: |
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+            make -C c/emulator-bridge CROSS_COMPILE=aarch64-linux-gnu-
+          else
+            make -C c/emulator-bridge CROSS_COMPILE=arm-linux-gnueabihf-
+          fi
+
+      - name: Prepare distribution
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          DIST_DIR="dist/rexos"
+
+          mkdir -p "$DIST_DIR"/{bin,lib,scripts,config}
+
+          # Copy binaries
+          cp target/${{ matrix.target }}/release/rexos-* "$DIST_DIR/bin/" 2>/dev/null || true
+
+          # Copy C libraries
+          cp build/c/emulator-bridge/*.so "$DIST_DIR/lib/" 2>/dev/null || true
+          cp build/c/emulator-bridge/*.a "$DIST_DIR/lib/" 2>/dev/null || true
+
+          # Copy scripts
+          cp -r scripts/* "$DIST_DIR/scripts/"
+          find "$DIST_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
+
+          # Create version file
+          echo "$VERSION" > "$DIST_DIR/version"
+
+          # Create archive
+          cd dist
+          tar -czvf "../rexos-${VERSION}-${{ matrix.name }}.tar.gz" rexos
+
+          # Create checksum
+          cd ..
+          sha256sum "rexos-${VERSION}-${{ matrix.name }}.tar.gz" > "rexos-${VERSION}-${{ matrix.name }}.tar.gz.sha256"
+
+      - name: Upload Release Asset (tar.gz)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: rexos-${{ needs.create-release.outputs.version }}-${{ matrix.name }}.tar.gz
+          asset_name: rexos-${{ needs.create-release.outputs.version }}-${{ matrix.name }}.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Asset (checksum)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: rexos-${{ needs.create-release.outputs.version }}-${{ matrix.name }}.tar.gz.sha256
+          asset_name: rexos-${{ needs.create-release.outputs.version }}-${{ matrix.name }}.tar.gz.sha256
+          asset_content_type: text/plain
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    if: "!contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')"
+    steps:
+      - name: Update Homebrew tap
+        run: |
+          echo "Homebrew formula update would go here"
+          # This would typically trigger an update to a homebrew tap repository
