@@ -20,7 +20,7 @@ RexOS aims to provide a streamlined, performant, and user-friendly operating sys
 **Language Distribution:**
 
 - **Rust (60%)**: Core system, hardware abstraction, game library manager
-- **Shell (30%)**: System scripts, updates, maintenance tools  
+- **Shell (30%)**: System scripts, updates, maintenance tools
 - **C (10%)**: Emulator bridges, hardware-specific optimizations
 
 ### Technology Stack
