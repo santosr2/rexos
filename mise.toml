@@ -22,21 +22,48 @@ _.path = ["./target/debug", "./target/release"]
 # Note: Using system Rust (install via rustup, not mise)
 # Rust 1.85+ required for Edition 2024 and let chains
 
+# Rust cargo extensions
+cargo-binstall = "latest"     # Fast binary installs
+cargo-nextest = "latest"      # Faster test runner
+cargo-insta = "latest"        # Snapshot testing
+cargo-deny = "latest"         # License & security checks
+cargo-audit = "latest"        # Security advisories
+cargo-machete = "latest"      # Find unused deps
+cargo-release = "latest"      # Release automation
+cargo-llvm-cov = "latest"     # Code coverage
+cargo-watch = "latest"        # Watch for changes
+cargo-outdated = "latest"     # Check outdated deps
+taplo = "latest"              # TOML formatter
+cross = "latest"              # Cross-compilation helper
+
 # Git & versioning
 git-cliff = "latest"          # Changelog generator
 gh = "latest"                 # GitHub CLI
+bump-my-version = "latest"    # Version management
 
 # Shell script linting
 shfmt = "latest"
 shellcheck = "latest"
 
-# YAML/JSON tools
+# YAML/JSON/Markdown tools
 yq = "latest"
 jq = "latest"
+yamllint = "latest"           # YAML linting
+markdownlint-cli = "latest"   # Markdown linting
+
+# Security tools
+cosign = "latest"             # Container/artifact signing
+detect-secrets = "latest"     # Secret detection in code
+
+# Spell checking
+codespell = "latest"          # Code spell checker
 
 # Pre-commit for git hooks
 pre-commit = "latest"
 actionlint = "latest"         # GitHub Actions linting
+
+# Docker/Container tools
+hadolint = "latest"           # Dockerfile linting
 
 # C/C++ tooling (for emulator bridge)
 cmake = "latest"
@@ -44,12 +71,10 @@ ninja = "latest"
 
 # Python for Buildroot and scripts
 python = "latest"
+pipx = "latest"               # Python tool installer
 
 # Node.js for documentation/tooling
 node = "lts"
-
-# Cargo tools are installed via `mise run setup` using cargo install
-# See [tasks.setup] below
 
 [settings]
 experimental = true
@@ -70,10 +95,6 @@ rustup target add armv7-unknown-linux-gnueabihf
 # Install Rust components
 echo "📦 Installing Rust components..."
 rustup component add rustfmt clippy rust-analyzer
-
-# Install cargo tools
-echo "📦 Installing Cargo tools..."
-cargo install cargo-watch cargo-audit cargo-outdated cargo-deny 2>/dev/null || true
 
 # Setup pre-commit hooks
 echo "🪝 Setting up pre-commit hooks..."
