@@ -1,0 +1,24 @@
+# Anbernic RG353M Device Profile
+# Use this profile to test RG353M-specific features
+
+id = "rg353m"
+name = "Anbernic RG353M"
+chipset = "RK3566"
+architecture = "aarch64"
+analog_sticks = 2
+battery_capacity = 3500
+
+buttons = [
+    "up", "down", "left", "right",
+    "a", "b", "x", "y",
+    "l1", "l2", "r1", "r2",
+    "start", "select"
+]
+
+quirks = []
+
+[display]
+width = 640
+height = 480
+format = "RGB565"
+refresh_rate = 60

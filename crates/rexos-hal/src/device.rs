@@ -266,9 +266,14 @@ impl Device {
         let model_lower = info.model.to_lowercase();
         let compatible_str = info.compatible.join(" ").to_lowercase();
 
-        // RG353M/V/VS detection (RK3566)
+        // RG353 series detection (RK3566)
+        // Variants: RG353M, RG353V, RG353VS, RG353P, RG353PS
         if model_lower.contains("rg353") || compatible_str.contains("rg353") {
-            let variant = if model_lower.contains("353m") {
+            let variant = if model_lower.contains("353ps") {
+                "RG353PS"
+            } else if model_lower.contains("353p") {
+                "RG353P"
+            } else if model_lower.contains("353m") {
                 "RG353M"
             } else if model_lower.contains("353vs") {
                 "RG353VS"
@@ -323,7 +328,19 @@ impl Device {
     }
 
     /// RG353 series profile (RK3566)
+    /// Variants: RG353M, RG353V, RG353VS, RG353P, RG353PS
     fn profile_rg353(variant: &str) -> DeviceProfile {
+        // Determine variant-specific settings
+        let (analog_sticks, battery_capacity, quirks) = match variant {
+            // RG353VS has only one analog stick
+            "RG353VS" => (1, 3500, vec![]),
+            // RG353P/PS have eMMC storage (no external SD for OS)
+            "RG353P" => (2, 3500, vec!["emmc_storage".into()]),
+            "RG353PS" => (1, 3500, vec!["emmc_storage".into()]),
+            // RG353M/V have dual analog and SD card storage
+            _ => (2, 3500, vec![]),
+        };
+
         DeviceProfile {
             id: variant.to_lowercase(),
             name: format!("Anbernic {variant}"),
@@ -342,9 +359,9 @@ impl Device {
             .into_iter()
             .map(Into::into)
             .collect(),
-            analog_sticks: 2,
-            battery_capacity: 3500,
-            quirks: vec![],
+            analog_sticks,
+            battery_capacity,
+            quirks,
         }
     }
 
@@ -568,10 +585,34 @@ mod tests {
         let rg353m = Device::profile_rg353("RG353M");
         let rg353v = Device::profile_rg353("RG353V");
         let rg353vs = Device::profile_rg353("RG353VS");
+        let rg353p = Device::profile_rg353("RG353P");
+        let rg353ps = Device::profile_rg353("RG353PS");
 
         assert_eq!(rg353m.id, "rg353m");
         assert_eq!(rg353v.id, "rg353v");
         assert_eq!(rg353vs.id, "rg353vs");
+        assert_eq!(rg353p.id, "rg353p");
+        assert_eq!(rg353ps.id, "rg353ps");
+
+        // RG353M/V have dual analog sticks
+        assert_eq!(rg353m.analog_sticks, 2);
+        assert_eq!(rg353v.analog_sticks, 2);
+
+        // RG353VS/PS have single analog stick
+        assert_eq!(rg353vs.analog_sticks, 1);
+        assert_eq!(rg353ps.analog_sticks, 1);
+
+        // RG353P has dual analog sticks
+        assert_eq!(rg353p.analog_sticks, 2);
+
+        // RG353P/PS have eMMC storage quirk
+        assert!(rg353p.quirks.contains(&String::from("emmc_storage")));
+        assert!(rg353ps.quirks.contains(&String::from("emmc_storage")));
+
+        // RG353M/V/VS don't have eMMC quirk
+        assert!(!rg353m.quirks.contains(&String::from("emmc_storage")));
+        assert!(!rg353v.quirks.contains(&String::from("emmc_storage")));
+        assert!(!rg353vs.quirks.contains(&String::from("emmc_storage")));
     }
 
     #[test]

@@ -1,0 +1,24 @@
+# Powkiddy RGB30 Device Profile
+# Use this profile to test square display features
+
+id = "rgb30"
+name = "Powkiddy RGB30"
+chipset = "RK3566"
+architecture = "aarch64"
+analog_sticks = 2
+battery_capacity = 4100
+
+buttons = [
+    "up", "down", "left", "right",
+    "a", "b", "x", "y",
+    "l1", "l2", "r1", "r2",
+    "start", "select"
+]
+
+quirks = ["square_display"]
+
+[display]
+width = 720
+height = 720
+format = "RGB565"
+refresh_rate = 60

@@ -73,10 +73,19 @@ enum View {
 }
 
 impl App {
+    /// Get ROM directory from environment or default
+    fn get_roms_dir() -> PathBuf {
+        std::env::var("REXOS_ROMS_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("/roms"))
+    }
+
     /// Create new application
     fn new() -> Result<Self> {
+        let roms_dir = Self::get_roms_dir();
+
         // Open game database
-        let db_path = PathBuf::from("/roms/.rexos/games.db");
+        let db_path = roms_dir.join(".rexos/games.db");
 
         // Create directory if needed
         if let Some(parent) = db_path.parent() {
@@ -365,7 +374,7 @@ impl App {
         self.status = "Scanning ROMs...".to_string();
 
         let scanner = RomScanner::new();
-        let roms_dir = PathBuf::from("/roms");
+        let roms_dir = Self::get_roms_dir();
 
         if let Ok(results) = scanner.scan_all(&roms_dir) {
             let mut total_games = 0;

@@ -30,6 +30,7 @@ pub mod audio;
 pub mod device;
 pub mod display;
 pub mod input;
+pub mod mock;
 pub mod power;
 
 pub use audio::{AudioConfig, AudioManager, AudioProfile, HeadphoneState};

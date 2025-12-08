@@ -19,51 +19,24 @@ CROSS_CONTAINER_ENGINE = "docker"
 _.path = ["./target/debug", "./target/release"]
 
 [tools]
-# Rust toolchain - pinned for reproducibility (Edition 2024)
-rust = "1.85"
+# Note: Using system Rust (install via rustup, not mise)
+# Rust 1.85+ required for Edition 2024 and let chains
 
-# Rust cargo extensions (inspired by mise project)
-cargo-binstall = "latest"
-cargo-nextest = "latest"      # Faster test runner
-cargo-insta = "latest"        # Snapshot testing
-cargo-deny = "latest"         # License & security checks
-cargo-audit = "latest"        # Security advisories
-cargo-machete = "latest"      # Find unused deps
-cargo-release = "latest"      # Release automation
-cargo-llvm-cov = "latest"     # Code coverage
-taplo = "latest"              # TOML formatter
-
-# Git & versioning (inspired by uptool)
+# Git & versioning
 git-cliff = "latest"          # Changelog generator
 gh = "latest"                 # GitHub CLI
-bump-my-version = "latest"    # Version management
 
 # Shell script linting
 shfmt = "latest"
 shellcheck = "latest"
 
-# YAML/JSON/Markdown tools
+# YAML/JSON tools
 yq = "latest"
 jq = "latest"
-yamllint = "latest"           # YAML linting
-markdownlint-cli = "latest"   # Markdown linting
-
-# Security tools (inspired by uptool)
-cosign = "latest"             # Container/artifact signing
-detect-secrets = "latest"     # Secret detection in code
-
-# Spell checking
-codespell = "latest"          # Code spell checker
 
 # Pre-commit for git hooks
 pre-commit = "latest"
 actionlint = "latest"         # GitHub Actions linting
-
-# Docker/Container tools
-hadolint = "latest"           # Dockerfile linting
-
-# Cross-compilation helper
-cross = "latest"
 
 # C/C++ tooling (for emulator bridge)
 cmake = "latest"
@@ -71,10 +44,12 @@ ninja = "latest"
 
 # Python for Buildroot and scripts
 python = "latest"
-pipx = "latest"               # Python tool installer
 
 # Node.js for documentation/tooling
 node = "lts"
+
+# Cargo tools are installed via `mise run setup` using cargo install
+# See [tasks.setup] below
 
 [settings]
 experimental = true
@@ -405,13 +380,81 @@ BINARY="${1:-rexos-launcher}"
 TARGET="aarch64-unknown-linux-gnu"
 
 if [ ! -f "target/$TARGET/release/$BINARY" ]; then
-    echo "❌ Binary not found. Run 'mise run cross-arm64' first."
+    echo "Binary not found. Run 'mise run cross-arm64' first."
     exit 1
 fi
 
-echo "🚀 Running $BINARY in QEMU..."
+echo "Running $BINARY in QEMU..."
 qemu-aarch64 -L /usr/aarch64-linux-gnu "target/$TARGET/release/$BINARY"
 """
+
+[tasks."test:mock"]
+description = "Run tests with mock device profile"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROFILE="${1:-rg353m}"
+echo "Running tests with mock device: $PROFILE"
+REXOS_MOCK_DEVICE="$PROFILE" cargo test --all-features
+"""
+
+[tasks."test:all-profiles"]
+description = "Run tests against all mock device profiles"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+profiles=("rg353m" "rg353v" "rg35xx" "rgb30" "rg503" "rg351p" "desktop")
+
+for profile in "${profiles[@]}"; do
+    echo ""
+    echo "========================================"
+    echo "Testing with profile: $profile"
+    echo "========================================"
+    REXOS_MOCK_DEVICE="$profile" cargo test --all-features || exit 1
+done
+
+echo ""
+echo "All profile tests passed!"
+"""
+
+[tasks."test:qemu"]
+description = "Run QEMU-based testing workflow"
+run = "./testing/qemu/run-qemu.sh"
+
+[tasks."test:qemu:shell"]
+description = "Interactive ARM64 shell via Docker"
+run = "./testing/qemu/run-qemu.sh shell"
+
+[tasks."test:cross"]
+description = "Run tests via cross-compilation"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running cross-compiled tests for ARM64..."
+REXOS_MOCK_DEVICE=qemu_virt cross test --target aarch64-unknown-linux-gnu --all-features
+"""
+
+[tasks."test:native"]
+description = "Run tests natively (Apple Silicon / aarch64 Linux)"
+run = "./testing/qemu/run-qemu.sh native"
+
+[tasks."launcher:setup"]
+description = "Set up test ROM directory for launcher"
+run = """
+#!/usr/bin/env bash
+ROMS_DIR="${REXOS_ROMS_DIR:-/tmp/rexos-test/roms}"
+mkdir -p "$ROMS_DIR/.rexos" "$ROMS_DIR/snes" "$ROMS_DIR/nes" "$ROMS_DIR/gba" "$ROMS_DIR/genesis"
+touch "$ROMS_DIR/snes/Super_Mario_World.sfc" "$ROMS_DIR/nes/Super_Mario_Bros.nes" "$ROMS_DIR/gba/Pokemon_Emerald.gba" 2>/dev/null || true
+echo "Test ROM directory ready: $ROMS_DIR"
+"""
+
+[tasks."launcher:build"]
+alias = "tui-build"
+description = "Build the RexOS TUI launcher"
+run = "cargo build -p rexos-launcher --release"
 
 [tasks.flash-sd]
 description = "Flash SD card image (requires sudo)"

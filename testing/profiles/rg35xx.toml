@@ -1,0 +1,24 @@
+# Anbernic RG35XX Device Profile
+# Use this profile to test RG35XX-specific features (no analog sticks)
+
+id = "rg35xx"
+name = "Anbernic RG35XX"
+chipset = "H700"
+architecture = "aarch64"
+analog_sticks = 0
+battery_capacity = 2600
+
+buttons = [
+    "up", "down", "left", "right",
+    "a", "b", "x", "y",
+    "l1", "r1",
+    "start", "select"
+]
+
+quirks = ["no_analog", "no_l2r2"]
+
+[display]
+width = 640
+height = 480
+format = "RGB565"
+refresh_rate = 60
