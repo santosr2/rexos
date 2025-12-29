@@ -1,0 +1,102 @@
+config BR2_PACKAGE_LIBRETRO_CORES
+	bool "libretro-cores"
+	depends on BR2_PACKAGE_RETROARCH
+	help
+	  Essential libretro cores for RexOS gaming OS.
+	  Includes cores for popular retro gaming systems.
+
+	  https://www.libretro.com/
+
+if BR2_PACKAGE_LIBRETRO_CORES
+
+config BR2_PACKAGE_LIBRETRO_CORES_MGBA
+	bool "mGBA (GBA)"
+	default y
+	help
+	  Game Boy Advance emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_GAMBATTE
+	bool "Gambatte (GB/GBC)"
+	default y
+	help
+	  Game Boy / Game Boy Color emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_SNES9X
+	bool "SNES9x (SNES)"
+	default y
+	help
+	  Super Nintendo emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_NESTOPIA
+	bool "Nestopia (NES)"
+	default y
+	help
+	  Nintendo Entertainment System emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_GENESIS_PLUS_GX
+	bool "Genesis Plus GX (Sega)"
+	default y
+	help
+	  Sega Genesis/Mega Drive, Master System, Game Gear core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_PCSX_REARMED
+	bool "PCSX ReARMed (PlayStation)"
+	default y
+	help
+	  PlayStation emulator optimized for ARM devices.
+
+config BR2_PACKAGE_LIBRETRO_CORES_MUPEN64PLUS_NEXT
+	bool "Mupen64Plus-Next (N64)"
+	default y
+	depends on BR2_aarch64 || BR2_i386 || BR2_x86_64
+	help
+	  Nintendo 64 emulator core.
+	  Requires 64-bit ARM or x86 architecture.
+
+config BR2_PACKAGE_LIBRETRO_CORES_DESMUME
+	bool "DeSmuME (NDS)"
+	default y
+	help
+	  Nintendo DS emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_BEETLE_PCE
+	bool "Beetle PCE (PC Engine)"
+	default y
+	help
+	  PC Engine / TurboGrafx-16 emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_FBNEO
+	bool "FBNeo (Arcade)"
+	default y
+	help
+	  Arcade emulator for CPS1, CPS2, CPS3, Neo Geo, and more.
+
+config BR2_PACKAGE_LIBRETRO_CORES_PPSSPP
+	bool "PPSSPP (PSP)"
+	default y
+	depends on BR2_aarch64 || BR2_i386 || BR2_x86_64
+	help
+	  PlayStation Portable emulator core.
+	  Requires 64-bit ARM or x86 architecture.
+
+config BR2_PACKAGE_LIBRETRO_CORES_FLYCAST
+	bool "Flycast (Dreamcast)"
+	default n
+	depends on BR2_aarch64 || BR2_i386 || BR2_x86_64
+	help
+	  Sega Dreamcast emulator core.
+	  Resource intensive - disabled by default.
+
+config BR2_PACKAGE_LIBRETRO_CORES_PICODRIVE
+	bool "PicoDrive (32X)"
+	default y
+	help
+	  Sega 32X emulator core.
+
+config BR2_PACKAGE_LIBRETRO_CORES_FCEUMM
+	bool "FCEUmm (NES alternate)"
+	default n
+	help
+	  Alternative NES emulator with more accuracy options.
+
+endif

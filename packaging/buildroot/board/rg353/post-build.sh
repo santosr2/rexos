@@ -28,14 +28,23 @@ echo "${VERSION}-${GIT_HASH}" > "${REXOS_ROOT}/version"
 # Create minimal /etc/inittab for BusyBox init (if using it as fallback)
 cat > "${TARGET_DIR}/etc/inittab" << 'EOF'
 # RexOS inittab
+# Run RexOS init first, then first-boot script, then launcher
 ::sysinit:/rexos/bin/rexos-init
+::wait:/rexos/scripts/runtime/install/first-boot.sh
 ::respawn:/rexos/bin/rexos-launcher
-::shutdown:/rexos/scripts/system/shutdown.sh
+::shutdown:/rexos/scripts/runtime/system/shutdown.sh
 ::ctrlaltdel:/sbin/reboot
 EOF
 
 # Create symlinks for RexOS binaries
 ln -sf /rexos/bin/rexos-init "${TARGET_DIR}/sbin/init" 2>/dev/null || true
+
+# Copy scripts to correct location
+if [ -d "${BOARD_DIR}/../../../scripts" ]; then
+    mkdir -p "${REXOS_ROOT}/scripts"
+    cp -r "${BOARD_DIR}/../../../scripts/runtime"/* "${REXOS_ROOT}/scripts/runtime/" 2>/dev/null || true
+    find "${REXOS_ROOT}/scripts" -name "*.sh" -exec chmod +x {} \;
+fi
 
 # Set up udev rules for input devices
 mkdir -p "${TARGET_DIR}/etc/udev/rules.d"
@@ -84,13 +93,25 @@ chmod 600 "${TARGET_DIR}/etc/wpa_supplicant/wpa_supplicant.conf"
 # Create tmpfs mounts in fstab
 cat > "${TARGET_DIR}/etc/fstab" << 'EOF'
 # RexOS Filesystem Table
-# <device>       <mount>      <type>   <options>                    <dump> <pass>
-/dev/root        /            auto     defaults,ro                  0      1
-tmpfs            /tmp         tmpfs    defaults,nosuid,nodev        0      0
-tmpfs            /var/run     tmpfs    defaults,nosuid,nodev        0      0
-tmpfs            /var/tmp     tmpfs    defaults,nosuid,nodev        0      0
-tmpfs            /var/log     tmpfs    defaults,nosuid,nodev,size=16M 0    0
+# <device>       <mount>           <type>   <options>                         <dump> <pass>
+/dev/root        /                 auto     defaults,ro                       0      1
+PARTLABEL=data   /rexos/data       ext4     defaults,noatime                  0      2
+PARTLABEL=roms   /rexos/roms       exfat    defaults,noatime,uid=0,gid=0      0      0
+tmpfs            /tmp              tmpfs    defaults,nosuid,nodev             0      0
+tmpfs            /var/run          tmpfs    defaults,nosuid,nodev             0      0
+tmpfs            /var/tmp          tmpfs    defaults,nosuid,nodev             0      0
+tmpfs            /var/log          tmpfs    defaults,nosuid,nodev,size=16M    0      0
 EOF
+
+# Create mount points for data and roms partitions
+mkdir -p "${TARGET_DIR}/rexos/data"
+mkdir -p "${TARGET_DIR}/rexos/roms"
+
+# Create symlinks for save data locations to data partition
+mkdir -p "${TARGET_DIR}/rexos/saves"
+mkdir -p "${TARGET_DIR}/rexos/states"
+mkdir -p "${TARGET_DIR}/rexos/screenshots"
+# Note: These will be symlinked to /rexos/data/ on first boot by init
 
 # Set hostname
 echo "rexos" > "${TARGET_DIR}/etc/hostname"
