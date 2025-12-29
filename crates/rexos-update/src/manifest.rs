@@ -287,24 +287,29 @@ impl UpdateManifest {
 
     /// Check if current version can update to this version
     pub fn can_update_from(&self, current_version: &str) -> bool {
-        if let Some(ref min) = self.min_version
-            && let (Ok(min_ver), Ok(curr_ver)) = (
+        // Avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if let Some(ref min) = self.min_version {
+            if let (Ok(min_ver), Ok(curr_ver)) = (
                 semver::Version::parse(min),
                 semver::Version::parse(current_version),
-            )
-            && curr_ver < min_ver
-        {
-            return false;
+            ) {
+                if curr_ver < min_ver {
+                    return false;
+                }
+            }
         }
 
-        if let Some(ref max) = self.max_version
-            && let (Ok(max_ver), Ok(curr_ver)) = (
+        #[allow(clippy::collapsible_if)]
+        if let Some(ref max) = self.max_version {
+            if let (Ok(max_ver), Ok(curr_ver)) = (
                 semver::Version::parse(max),
                 semver::Version::parse(current_version),
-            )
-            && curr_ver >= max_ver
-        {
-            return false;
+            ) {
+                if curr_ver >= max_ver {
+                    return false;
+                }
+            }
         }
 
         true

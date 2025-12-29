@@ -170,13 +170,15 @@ impl UpdateInstaller {
                 if file_path.exists() {
                     let actual_hash = self.compute_sha256(&file_path)?;
 
-                    if let Some(expected) = expected_hash.as_str()
-                        && actual_hash != expected
-                    {
-                        return Err(UpdateError::VerificationFailed(format!(
-                            "Hash mismatch for {}",
-                            file
-                        )));
+                    // Avoid if-let chains for MSRV 1.85 compatibility
+                    #[allow(clippy::collapsible_if)]
+                    if let Some(expected) = expected_hash.as_str() {
+                        if actual_hash != expected {
+                            return Err(UpdateError::VerificationFailed(format!(
+                                "Hash mismatch for {}",
+                                file
+                            )));
+                        }
                     }
                 }
             }

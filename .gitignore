@@ -45,3 +45,9 @@ secrets/
 !scripts/build
 
 testing.md
+
+# Claude Code local files (personal, not shared)
+.claude/settings.local.json
+.claude/*.local.json
+.mcp.local.json
+CLAUDE.local.md

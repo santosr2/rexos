@@ -55,14 +55,16 @@ impl RetroArchLauncher {
             let entry = entry?;
             let path = entry.path();
 
-            if let Some(name) = path.file_name().and_then(|n| n.to_str())
-                && name.ends_with("_libretro.so")
-            {
-                let core_name = name.trim_end_matches("_libretro.so").to_string();
+            // Avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.ends_with("_libretro.so") {
+                    let core_name = name.trim_end_matches("_libretro.so").to_string();
 
-                // Try to load .info file
-                let info = self.load_core_info(&core_name, &path);
-                self.core_info.insert(core_name, info);
+                    // Try to load .info file
+                    let info = self.load_core_info(&core_name, &path);
+                    self.core_info.insert(core_name, info);
+                }
             }
         }
 
@@ -166,10 +168,12 @@ impl RetroArchLauncher {
         let contents = fs::read_to_string(&config_path).ok()?;
 
         for line in contents.lines() {
-            if let Some((k, v)) = line.split_once('=')
-                && k.trim() == key
-            {
-                return Some(v.trim().trim_matches('"').to_string());
+            // Avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if let Some((k, v)) = line.split_once('=') {
+                if k.trim() == key {
+                    return Some(v.trim().trim_matches('"').to_string());
+                }
             }
         }
 

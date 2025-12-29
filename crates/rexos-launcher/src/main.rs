@@ -440,24 +440,25 @@ impl App {
     /// Handle settings view input
     fn handle_settings_input(&mut self, key: KeyCode) -> Result<()> {
         if self.editing_setting {
-            // Handle editing mode
-            if let Some(i) = self.settings_state.selected()
-                && i < self.settings_items.len()
-            {
-                match key {
-                    KeyCode::Left => {
-                        self.adjust_setting(i, false);
-                        self.apply_setting(i)?;
+            // Handle editing mode - avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if let Some(i) = self.settings_state.selected() {
+                if i < self.settings_items.len() {
+                    match key {
+                        KeyCode::Left => {
+                            self.adjust_setting(i, false);
+                            self.apply_setting(i)?;
+                        }
+                        KeyCode::Right => {
+                            self.adjust_setting(i, true);
+                            self.apply_setting(i)?;
+                        }
+                        KeyCode::Enter | KeyCode::Esc | KeyCode::Char('b') => {
+                            self.editing_setting = false;
+                            self.status = "Settings saved".to_string();
+                        }
+                        _ => {}
                     }
-                    KeyCode::Right => {
-                        self.adjust_setting(i, true);
-                        self.apply_setting(i)?;
-                    }
-                    KeyCode::Enter | KeyCode::Esc | KeyCode::Char('b') => {
-                        self.editing_setting = false;
-                        self.status = "Settings saved".to_string();
-                    }
-                    _ => {}
                 }
             }
         } else {
@@ -476,16 +477,17 @@ impl App {
                         self.status = "[←→] Adjust  [Enter] Confirm".to_string();
 
                         // For toggles, immediately toggle on Enter
-                        if let Some(i) = self.settings_state.selected()
-                            && i < self.settings_items.len()
-                        {
-                            if let SettingKind::Toggle { .. } = self.settings_items[i].kind {
-                                self.adjust_setting(i, true); // Toggle
-                                self.apply_setting(i)?;
-                                self.editing_setting = false;
-                            } else if key == KeyCode::Left || key == KeyCode::Right {
-                                self.adjust_setting(i, key == KeyCode::Right);
-                                self.apply_setting(i)?;
+                        #[allow(clippy::collapsible_if)]
+                        if let Some(i) = self.settings_state.selected() {
+                            if i < self.settings_items.len() {
+                                if let SettingKind::Toggle { .. } = self.settings_items[i].kind {
+                                    self.adjust_setting(i, true); // Toggle
+                                    self.apply_setting(i)?;
+                                    self.editing_setting = false;
+                                } else if key == KeyCode::Left || key == KeyCode::Right {
+                                    self.adjust_setting(i, key == KeyCode::Right);
+                                    self.apply_setting(i)?;
+                                }
                             }
                         }
                     }
@@ -609,19 +611,21 @@ impl App {
 
     /// Enter selected system
     fn enter_system(&mut self) -> Result<()> {
-        if let Some(i) = self.systems_state.selected()
-            && i < self.systems.len()
-        {
-            let system = &self.systems[i].0;
-            self.selected_system = Some(system.clone());
-            self.games = self.db.get_games_by_system(system)?;
-            self.view = View::Games;
+        // Avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if let Some(i) = self.systems_state.selected() {
+            if i < self.systems.len() {
+                let system = &self.systems[i].0;
+                self.selected_system = Some(system.clone());
+                self.games = self.db.get_games_by_system(system)?;
+                self.view = View::Games;
 
-            if !self.games.is_empty() {
-                self.games_state.select(Some(0));
+                if !self.games.is_empty() {
+                    self.games_state.select(Some(0));
+                }
+
+                self.status = format!("{} games", self.games.len());
             }
-
-            self.status = format!("{} games", self.games.len());
         }
         Ok(())
     }
@@ -673,50 +677,54 @@ impl App {
 
     /// Toggle favorite for selected game
     fn toggle_favorite(&mut self) -> Result<()> {
-        if let Some(i) = self.games_state.selected()
-            && i < self.games.len()
-        {
-            let game = &mut self.games[i];
-            game.favorite = !game.favorite;
-            self.db.set_favorite(game.id, game.favorite)?;
+        // Avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if let Some(i) = self.games_state.selected() {
+            if i < self.games.len() {
+                let game = &mut self.games[i];
+                game.favorite = !game.favorite;
+                self.db.set_favorite(game.id, game.favorite)?;
 
-            self.status = if game.favorite {
-                "Added to favorites".to_string()
-            } else {
-                "Removed from favorites".to_string()
-            };
+                self.status = if game.favorite {
+                    "Added to favorites".to_string()
+                } else {
+                    "Removed from favorites".to_string()
+                };
+            }
         }
         Ok(())
     }
 
     /// Launch selected game
     fn launch_selected_game(&mut self) -> Result<()> {
-        if let Some(i) = self.games_state.selected()
-            && i < self.games.len()
-        {
-            let game = &self.games[i];
-            self.status = format!("Launching {}...", game.name);
+        // Avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if let Some(i) = self.games_state.selected() {
+            if i < self.games.len() {
+                let game = &self.games[i];
+                self.status = format!("Launching {}...", game.name);
 
-            // Build launch config
-            let config = LaunchConfig::for_rom(&game.path);
+                // Build launch config
+                let config = LaunchConfig::for_rom(&game.path);
 
-            // Launch game
-            match self.launcher.launch(config) {
-                Ok(result) => {
-                    info!("Launched game with PID {}", result.pid);
+                // Launch game
+                match self.launcher.launch(config) {
+                    Ok(result) => {
+                        info!("Launched game with PID {}", result.pid);
 
-                    // Wait for emulator to exit
-                    let mut child = result.child;
-                    let _ = child.wait();
+                        // Wait for emulator to exit
+                        let mut child = result.child;
+                        let _ = child.wait();
 
-                    // Update play stats
-                    self.db.update_play_stats(game.id, 0)?;
+                        // Update play stats
+                        self.db.update_play_stats(game.id, 0)?;
 
-                    self.status = "Ready".to_string();
-                }
-                Err(e) => {
-                    error!("Failed to launch game: {}", e);
-                    self.status = format!("Error: {}", e);
+                        self.status = "Ready".to_string();
+                    }
+                    Err(e) => {
+                        error!("Failed to launch game: {}", e);
+                        self.status = format!("Error: {}", e);
+                    }
                 }
             }
         }
@@ -1003,20 +1011,23 @@ fn main() -> Result<()> {
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
 
-        // Check keyboard input first
-        if event::poll(timeout)?
-            && let Event::Key(key) = event::read()?
-            && key.kind == KeyEventKind::Press
-        {
-            app.handle_input(key.code)?;
+        // Check keyboard input first - avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press {
+                    app.handle_input(key.code)?;
+                }
+            }
         }
 
         // Also check gamepad input (with debounce)
-        if last_gamepad_input.elapsed() >= gamepad_repeat_delay
-            && let Some(key) = app.poll_gamepad()
-        {
-            app.handle_input(key)?;
-            last_gamepad_input = Instant::now();
+        #[allow(clippy::collapsible_if)]
+        if last_gamepad_input.elapsed() >= gamepad_repeat_delay {
+            if let Some(key) = app.poll_gamepad() {
+                app.handle_input(key)?;
+                last_gamepad_input = Instant::now();
+            }
         }
 
         if last_tick.elapsed() >= tick_rate {
