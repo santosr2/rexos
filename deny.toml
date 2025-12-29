@@ -15,7 +15,6 @@ ignore = [
 ]
 
 [licenses]
-unlicensed = "deny"
 confidence-threshold = 0.8
 allow = [
     "MIT",

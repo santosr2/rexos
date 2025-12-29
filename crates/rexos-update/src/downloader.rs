@@ -261,7 +261,9 @@ impl UpdateDownloader {
             let result = unsafe { libc::statvfs(c_path.as_ptr(), &mut stat) };
 
             if result == 0 {
-                Ok(stat.f_bavail as u64 * stat.f_bsize as u64)
+                // Types vary by platform (u32 on Linux, u64 on macOS)
+                #[allow(clippy::useless_conversion)]
+                Ok(u64::from(stat.f_bavail) * u64::from(stat.f_bsize))
             } else {
                 Err(UpdateError::Io(std::io::Error::last_os_error()))
             }

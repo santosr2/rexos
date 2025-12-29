@@ -257,10 +257,12 @@ const char* rexos_button_name(rexos_button_t button)
 /**
  * Scan for available input devices
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 int rexos_scan_input_devices(char devices[][64], int max_devices)
 {
     int count = 0;
-    char path[64];
+    char path[32]; /* /dev/input/eventXX is max ~20 chars */
 
     for (int i = 0; i < 32 && count < max_devices; i++) {
         snprintf(path, sizeof(path), "/dev/input/event%d", i);
@@ -269,16 +271,14 @@ int rexos_scan_input_devices(char devices[][64], int max_devices)
         if (fd < 0)
             continue;
 
-        /* Get device name */
-        char name[256] = "Unknown";
+        /* Get device name - limit to 30 chars to fit in 64-byte buffer with path */
+        char name[32] = "Unknown";
         ioctl(fd, EVIOCGNAME(sizeof(name)), name);
         close(fd);
 
         /* Check if it's a game controller */
         if (strstr(name, "Gamepad") || strstr(name, "Controller") || strstr(name, "Joystick") ||
             strstr(name, "gamepad") || strstr(name, "joypad")) {
-            /* Truncate name to fit in 64-byte buffer with path */
-            name[40] = '\0'; /* Leave room for path and separator */
             snprintf(devices[count], 64, "%s: %s", path, name);
             count++;
         }
@@ -286,3 +286,4 @@ int rexos_scan_input_devices(char devices[][64], int max_devices)
 
     return count;
 }
+#pragma GCC diagnostic pop
