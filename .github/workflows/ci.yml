@@ -147,18 +147,19 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build C bridge (native)
-        run: make -C c/emulator-bridge
+        run: make -C ffi/emulator-bridge
 
       - name: Build C bridge (ARM64)
         run: |
-          make -C c/emulator-bridge clean
-          make -C c/emulator-bridge CROSS_COMPILE=aarch64-linux-gnu-
+          make -C ffi/emulator-bridge clean
+          make -C ffi/emulator-bridge CROSS_COMPILE=aarch64-linux-gnu-
 
       - name: Upload C artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rexos-bridge
-          path: build/c/emulator-bridge/
+          path: target/ffi/emulator-bridge/
+          if-no-files-found: warn
 
   security-audit:
     name: Security Audit
