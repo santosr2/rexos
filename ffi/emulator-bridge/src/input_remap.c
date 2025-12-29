@@ -20,8 +20,8 @@ static int g_deadzone = 4096;
 static rexos_button_map_t g_button_map[32];
 static int g_button_map_count = 0;
 
-/* Uinput file descriptor for virtual input device */
-static int g_uinput_fd = -1;
+/* Uinput file descriptor for virtual input device (reserved for future use) */
+__attribute__((unused)) static int g_uinput_fd = -1;
 
 /**
  * Read deadzone from RetroArch config or system default
@@ -100,9 +100,9 @@ rexos_error_t rexos_apply_button_map(const rexos_button_map_t* map, int count)
 }
 
 /**
- * Create a virtual input device using uinput
+ * Create a virtual input device using uinput (reserved for future use)
  */
-static int create_virtual_device(void)
+__attribute__((unused)) static int create_virtual_device(void)
 {
     int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (fd < 0) {
@@ -174,9 +174,9 @@ static int create_virtual_device(void)
 }
 
 /**
- * Destroy virtual input device
+ * Destroy virtual input device (reserved for future use)
  */
-static void destroy_virtual_device(int fd)
+__attribute__((unused)) static void destroy_virtual_device(int fd)
 {
     if (fd >= 0) {
         ioctl(fd, UI_DEV_DESTROY);
@@ -185,9 +185,10 @@ static void destroy_virtual_device(int fd)
 }
 
 /**
- * Send input event through virtual device
+ * Send input event through virtual device (reserved for future use)
  */
-static void send_event(int fd, unsigned short type, unsigned short code, int value)
+__attribute__((unused)) static void send_event(int fd, unsigned short type, unsigned short code,
+                                               int value)
 {
     struct input_event ev;
     memset(&ev, 0, sizeof(ev));
@@ -198,9 +199,9 @@ static void send_event(int fd, unsigned short type, unsigned short code, int val
 }
 
 /**
- * Apply button mapping to an event
+ * Apply button mapping to an event (reserved for future use)
  */
-static unsigned short apply_mapping(unsigned short code)
+__attribute__((unused)) static unsigned short apply_mapping(unsigned short code)
 {
     for (int i = 0; i < g_button_map_count; i++) {
         if (g_button_map[i].from == code) {
@@ -276,6 +277,8 @@ int rexos_scan_input_devices(char devices[][64], int max_devices)
         /* Check if it's a game controller */
         if (strstr(name, "Gamepad") || strstr(name, "Controller") || strstr(name, "Joystick") ||
             strstr(name, "gamepad") || strstr(name, "joypad")) {
+            /* Truncate name to fit in 64-byte buffer with path */
+            name[40] = '\0'; /* Leave room for path and separator */
             snprintf(devices[count], 64, "%s: %s", path, name);
             count++;
         }
