@@ -238,13 +238,14 @@ impl AudioManager {
         };
 
         for line in contents.lines() {
-            // Use if-let chain (Rust 2024) to reduce nesting
-            if let Some(idx) = line.find('[')
-                && let Some(end) = line.find(']')
-            {
-                let name = line[idx + 1..end].trim();
-                if !name.is_empty() {
-                    cards.push(name.to_string());
+            // Avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if let Some(idx) = line.find('[') {
+                if let Some(end) = line.find(']') {
+                    let name = line[idx + 1..end].trim();
+                    if !name.is_empty() {
+                        cards.push(name.to_string());
+                    }
                 }
             }
         }

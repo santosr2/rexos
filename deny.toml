@@ -10,8 +10,9 @@ no-default-features = false
 [advisories]
 db-path = "~/.cargo/advisory-db"
 ignore = [
-    # Add ignored advisories here with comments explaining why
-    # "RUSTSEC-XXXX-XXXX", # reason
+    # Unmaintained crates that are transitive dependencies
+    "RUSTSEC-2024-0384",  # instant - unmaintained, used transitively
+    "RUSTSEC-2024-0436",  # paste - unmaintained, used transitively
 ]
 
 [licenses]
@@ -27,9 +28,9 @@ allow = [
     "MPL-2.0",
     "Zlib",
     "Unicode-3.0",
-    "Unicode-DFS-2016",
     "CC0-1.0",
     "Unlicense",
+    "CDLA-Permissive-2.0",  # webpki-roots
 ]
 
 # Ring uses a custom license
@@ -40,7 +41,7 @@ license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
 
 [bans]
 multiple-versions = "warn"
-wildcards = "deny"
+wildcards = "allow"  # Allow workspace.dependencies = true pattern
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
