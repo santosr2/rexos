@@ -261,4 +261,141 @@ mod tests {
         };
         assert!(device.size_human().contains("GB"));
     }
+
+    #[test]
+    fn test_size_human_mb() {
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/test"),
+            model: None,
+            size_bytes: 512 * 1024 * 1024, // 512MB
+            removable: false,
+            partitions: vec![],
+        };
+        assert!(device.size_human().contains("MB"));
+    }
+
+    #[test]
+    fn test_size_human_kb() {
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/test"),
+            model: None,
+            size_bytes: 512 * 1024, // 512KB
+            removable: false,
+            partitions: vec![],
+        };
+        assert!(device.size_human().contains("KB"));
+    }
+
+    #[test]
+    fn test_size_human_bytes() {
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/test"),
+            model: None,
+            size_bytes: 512, // 512B
+            removable: false,
+            partitions: vec![],
+        };
+        assert!(device.size_human().contains("B"));
+        assert!(!device.size_human().contains("KB"));
+    }
+
+    #[test]
+    fn test_is_boot_device() {
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/mmcblk0"),
+            model: None,
+            size_bytes: 0,
+            removable: false,
+            partitions: vec![],
+        };
+        assert!(device.is_boot_device());
+
+        let device2 = StorageDevice {
+            path: PathBuf::from("/dev/mmcblk1"),
+            model: None,
+            size_bytes: 0,
+            removable: true,
+            partitions: vec![],
+        };
+        assert!(!device2.is_boot_device());
+    }
+
+    #[test]
+    fn test_is_secondary_sd() {
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/mmcblk1"),
+            model: None,
+            size_bytes: 0,
+            removable: true,
+            partitions: vec![],
+        };
+        assert!(device.is_secondary_sd());
+
+        let device2 = StorageDevice {
+            path: PathBuf::from("/dev/mmcblk0"),
+            model: None,
+            size_bytes: 0,
+            removable: false,
+            partitions: vec![],
+        };
+        assert!(!device2.is_secondary_sd());
+    }
+
+    #[test]
+    fn test_partition_info() {
+        let info = PartitionInfo {
+            device: "mmcblk0p1".to_string(),
+            size_bytes: 1024 * 1024 * 1024, // 1GB
+            filesystem: Some("ext4".to_string()),
+            label: Some("BOOT".to_string()),
+            uuid: Some("1234-5678".to_string()),
+        };
+
+        assert_eq!(info.device, "mmcblk0p1");
+        assert_eq!(info.filesystem, Some("ext4".to_string()));
+        assert_eq!(info.label, Some("BOOT".to_string()));
+    }
+
+    #[test]
+    fn test_partition_struct() {
+        let partition = Partition {
+            path: PathBuf::from("/dev/mmcblk0p1"),
+            info: PartitionInfo {
+                device: "mmcblk0p1".to_string(),
+                size_bytes: 1024 * 1024 * 1024,
+                filesystem: None,
+                label: None,
+                uuid: None,
+            },
+        };
+
+        assert_eq!(partition.path, PathBuf::from("/dev/mmcblk0p1"));
+        assert_eq!(partition.info.size_bytes, 1024 * 1024 * 1024);
+    }
+
+    #[test]
+    fn test_storage_device_with_partitions() {
+        let partition = Partition {
+            path: PathBuf::from("/dev/sda1"),
+            info: PartitionInfo {
+                device: "sda1".to_string(),
+                size_bytes: 10 * 1024 * 1024 * 1024,
+                filesystem: Some("ext4".to_string()),
+                label: Some("DATA".to_string()),
+                uuid: None,
+            },
+        };
+
+        let device = StorageDevice {
+            path: PathBuf::from("/dev/sda"),
+            model: Some("USB Flash Drive".to_string()),
+            size_bytes: 16 * 1024 * 1024 * 1024,
+            removable: true,
+            partitions: vec![partition],
+        };
+
+        assert_eq!(device.partitions.len(), 1);
+        assert_eq!(device.model, Some("USB Flash Drive".to_string()));
+        assert!(device.removable);
+    }
 }

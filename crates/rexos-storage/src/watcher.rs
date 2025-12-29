@@ -130,4 +130,107 @@ mod tests {
         let watcher = StorageWatcher::new();
         assert!(!watcher.running);
     }
+
+    #[test]
+    fn test_watcher_default() {
+        let watcher = StorageWatcher::default();
+        assert!(!watcher.running);
+    }
+
+    #[test]
+    fn test_storage_event_device_added() {
+        let event = StorageEvent::DeviceAdded {
+            device: PathBuf::from("/dev/sda"),
+        };
+        if let StorageEvent::DeviceAdded { device } = event {
+            assert_eq!(device, PathBuf::from("/dev/sda"));
+        } else {
+            panic!("Expected DeviceAdded event");
+        }
+    }
+
+    #[test]
+    fn test_storage_event_device_removed() {
+        let event = StorageEvent::DeviceRemoved {
+            device: PathBuf::from("/dev/sdb"),
+        };
+        if let StorageEvent::DeviceRemoved { device } = event {
+            assert_eq!(device, PathBuf::from("/dev/sdb"));
+        } else {
+            panic!("Expected DeviceRemoved event");
+        }
+    }
+
+    #[test]
+    fn test_storage_event_mounted() {
+        let event = StorageEvent::Mounted {
+            device: PathBuf::from("/dev/sda1"),
+            mount_point: PathBuf::from("/mnt/usb"),
+        };
+        if let StorageEvent::Mounted {
+            device,
+            mount_point,
+        } = event
+        {
+            assert_eq!(device, PathBuf::from("/dev/sda1"));
+            assert_eq!(mount_point, PathBuf::from("/mnt/usb"));
+        } else {
+            panic!("Expected Mounted event");
+        }
+    }
+
+    #[test]
+    fn test_storage_event_unmounted() {
+        let event = StorageEvent::Unmounted {
+            mount_point: PathBuf::from("/mnt/usb"),
+        };
+        if let StorageEvent::Unmounted { mount_point } = event {
+            assert_eq!(mount_point, PathBuf::from("/mnt/usb"));
+        } else {
+            panic!("Expected Unmounted event");
+        }
+    }
+
+    #[test]
+    fn test_try_recv_empty() {
+        let watcher = StorageWatcher::new();
+        // Should return None when no events are queued
+        assert!(watcher.try_recv().is_none());
+    }
+
+    #[test]
+    fn test_recv_timeout_empty() {
+        let watcher = StorageWatcher::new();
+        // Should return None when no events within timeout
+        let result = watcher.recv_timeout(Duration::from_millis(10));
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_events_accessor() {
+        let watcher = StorageWatcher::new();
+        let _rx = watcher.events();
+        // Just verify we can access the receiver
+    }
+
+    #[test]
+    fn test_storage_event_clone() {
+        let event = StorageEvent::DeviceAdded {
+            device: PathBuf::from("/dev/sda"),
+        };
+        let cloned = event.clone();
+        if let StorageEvent::DeviceAdded { device } = cloned {
+            assert_eq!(device, PathBuf::from("/dev/sda"));
+        }
+    }
+
+    #[test]
+    fn test_storage_event_debug() {
+        let event = StorageEvent::DeviceAdded {
+            device: PathBuf::from("/dev/sda"),
+        };
+        let debug_str = format!("{:?}", event);
+        assert!(debug_str.contains("DeviceAdded"));
+        assert!(debug_str.contains("sda"));
+    }
 }

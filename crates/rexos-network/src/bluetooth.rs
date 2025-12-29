@@ -92,7 +92,7 @@ pub enum PairingState {
 
 /// Manages Bluetooth connections
 pub struct BluetoothManager {
-    #[allow(dead_code)]
+    /// Bluetooth adapter interface name (e.g., "hci0")
     interface: String,
     available: bool,
 }
@@ -373,6 +373,11 @@ impl BluetoothManager {
     pub fn set_alias(&self, name: &str) -> Result<(), NetworkError> {
         self.bluetoothctl(&["system-alias", name])?;
         Ok(())
+    }
+
+    /// Get the Bluetooth interface name
+    pub fn interface(&self) -> &str {
+        &self.interface
     }
 
     /// Get adapter info

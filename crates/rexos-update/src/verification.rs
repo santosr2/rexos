@@ -106,11 +106,9 @@ impl SignatureVerifier {
     }
 }
 
-/// Verifies file hashes
-#[allow(dead_code)]
+/// Verifies file hashes using SHA256
 pub struct HashVerifier;
 
-#[allow(dead_code)]
 impl HashVerifier {
     /// Compute SHA256 hash of a file
     pub fn sha256_file(path: &Path) -> Result<String, VerificationError> {
@@ -169,14 +167,15 @@ impl HashVerifier {
     }
 }
 
-/// Certificate chain verification (for future HTTPS pinning)
-#[allow(dead_code)]
+/// Certificate chain verification for HTTPS pinning
+///
+/// Used to verify that update server certificates match expected pinned certificates,
+/// providing an additional layer of security against MITM attacks.
 pub struct CertificateVerifier {
-    /// Pinned certificate hashes
+    /// Pinned certificate hashes (SHA256)
     pinned_certs: Vec<String>,
 }
 
-#[allow(dead_code)]
 impl CertificateVerifier {
     /// Create with pinned certificate hashes
     pub fn new(pinned_certs: Vec<String>) -> Self {
@@ -189,16 +188,66 @@ impl CertificateVerifier {
     }
 
     /// Add RexOS update server certificate
+    ///
+    /// # Production Setup
+    ///
+    /// Before deploying to production, replace this placeholder with the actual
+    /// SHA256 hash of the RexOS update server's TLS certificate. To obtain the hash:
+    ///
+    /// ```bash
+    /// echo | openssl s_client -connect updates.rexos.io:443 2>/dev/null | \
+    ///   openssl x509 -pubkey -noout | \
+    ///   openssl pkey -pubin -outform der | \
+    ///   openssl dgst -sha256 -binary | \
+    ///   xxd -p -c 64
+    /// ```
     pub fn with_rexos_cert(mut self) -> Self {
-        // SHA256 of RexOS update server certificate (placeholder)
-        self.pinned_certs
-            .push("0000000000000000000000000000000000000000000000000000000000000000".to_string());
+        // TODO(production): Replace with actual RexOS update server certificate hash
+        // This is a placeholder - the real hash should be obtained from the production
+        // server certificate and hardcoded here for certificate pinning security.
+        //
+        // For development/testing, this placeholder allows the system to function
+        // without certificate pinning enabled.
+        const REXOS_CERT_HASH: &str =
+            "0000000000000000000000000000000000000000000000000000000000000000";
+
+        self.pinned_certs.push(REXOS_CERT_HASH.to_string());
         self
+    }
+
+    /// Check if certificate pinning is properly configured (not using placeholder)
+    pub fn is_configured(&self) -> bool {
+        const PLACEHOLDER: &str =
+            "0000000000000000000000000000000000000000000000000000000000000000";
+        !self.pinned_certs.iter().all(|c| c == PLACEHOLDER)
     }
 }
 
-/// Generate a signing keypair (for build tools)
-#[allow(dead_code)]
+/// Generate a signing keypair for update signing (build/release tooling)
+///
+/// This function is used by the RexOS build system to generate Ed25519 keypairs
+/// for signing update packages. The generated keys are used as follows:
+///
+/// - **Private key**: Kept secure on the build server, used to sign updates
+/// - **Public key**: Embedded in the firmware, used to verify update signatures
+///
+/// # Returns
+///
+/// A tuple of (private_key_hex, public_key_hex) where both are hex-encoded strings.
+///
+/// # Example (Build Tool Usage)
+///
+/// ```ignore
+/// // In release tooling:
+/// let (private, public) = generate_keypair();
+/// // Store private key securely, embed public key in config
+/// ```
+///
+/// # Security Note
+///
+/// The private key should NEVER be committed to version control or distributed
+/// with firmware. Store it securely using a secrets management system.
+#[allow(dead_code)] // Used by build/release tooling, not runtime code
 pub fn generate_keypair() -> (String, String) {
     use ed25519_dalek::SigningKey;
     use rand::RngCore;
@@ -216,8 +265,34 @@ pub fn generate_keypair() -> (String, String) {
     (private_hex, public_hex)
 }
 
-/// Sign data with a private key (for build tools)
-#[allow(dead_code)]
+/// Sign data with a private key (build/release tooling)
+///
+/// This function is used by the RexOS release tooling to sign update packages
+/// before distribution. The signature is verified on the device using the
+/// corresponding public key.
+///
+/// # Arguments
+///
+/// * `data` - The data to sign (typically the update file contents)
+/// * `private_key_hex` - The hex-encoded Ed25519 private key (32 bytes = 64 hex chars)
+///
+/// # Returns
+///
+/// The hex-encoded Ed25519 signature (64 bytes = 128 hex chars)
+///
+/// # Example (Build Tool Usage)
+///
+/// ```ignore
+/// // In release tooling:
+/// let update_data = std::fs::read("update.tar.gz")?;
+/// let signature = sign_data(&update_data, &private_key)?;
+/// // Include signature in update manifest
+/// ```
+///
+/// # Errors
+///
+/// Returns an error if the private key is invalid or incorrectly formatted.
+#[allow(dead_code)] // Used by build/release tooling, not runtime code
 pub fn sign_data(data: &[u8], private_key_hex: &str) -> Result<String, VerificationError> {
     use ed25519_dalek::{Signer, SigningKey};
 

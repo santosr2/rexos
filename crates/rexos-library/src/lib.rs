@@ -8,7 +8,7 @@ mod metadata;
 mod scanner;
 
 pub use database::{Game, GameDatabase, GameStats};
-pub use metadata::{GameMetadata, MetadataSource};
+pub use metadata::{GameMetadata, MetadataSource, parse_gamelist_xml};
 pub use scanner::{RomScanner, ScanResult};
 
 use std::path::PathBuf;

@@ -16,11 +16,11 @@
 //! let custom = MockDevice::from_profile_file(Path::new("profiles/custom.toml"));
 //! ```
 
+use crate::power::CpuGovernor;
 use crate::{
     AudioConfig, BatteryHealth, BatteryStatus, Button, DeviceError, DeviceProfile, DisplaySpec,
     HeadphoneState, InputEvent, InputState, Rotation,
 };
-use crate::power::CpuGovernor;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
@@ -148,7 +148,8 @@ impl MockProfile {
                     refresh_rate: 60,
                 },
                 buttons: vec![
-                    "up", "down", "left", "right", "a", "b", "x", "y", "l1", "r1", "start", "select",
+                    "up", "down", "left", "right", "a", "b", "x", "y", "l1", "r1", "start",
+                    "select",
                 ]
                 .into_iter()
                 .map(Into::into)

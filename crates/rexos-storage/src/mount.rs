@@ -194,4 +194,75 @@ mod tests {
         let manager = MountManager::new();
         assert!(manager.mounts.is_empty());
     }
+
+    #[test]
+    fn test_mount_point_struct() {
+        let mount = MountPoint {
+            device: "/dev/sda1".to_string(),
+            mount_point: PathBuf::from("/mnt/usb"),
+            filesystem: "ext4".to_string(),
+            options: vec!["rw".to_string(), "noatime".to_string()],
+        };
+
+        assert_eq!(mount.device, "/dev/sda1");
+        assert_eq!(mount.filesystem, "ext4");
+        assert_eq!(mount.options.len(), 2);
+    }
+
+    #[test]
+    fn test_is_mounted_empty() {
+        let manager = MountManager::new();
+        assert!(!manager.is_mounted(Path::new("/mnt/test")));
+    }
+
+    #[test]
+    fn test_get_mount_not_found() {
+        let manager = MountManager::new();
+        assert!(manager.get_mount(Path::new("/mnt/nonexistent")).is_none());
+    }
+
+    #[test]
+    fn test_find_removable_empty() {
+        let manager = MountManager::new();
+        let removable = manager.find_removable();
+        assert!(removable.is_empty());
+    }
+
+    #[test]
+    fn test_mount_error_display() {
+        let err = MountError::MountFailed {
+            device: "/dev/sda1".to_string(),
+            mount_point: "/mnt/usb".to_string(),
+            reason: "Permission denied".to_string(),
+        };
+        let msg = format!("{}", err);
+        assert!(msg.contains("sda1"));
+        assert!(msg.contains("Permission denied"));
+
+        let err = MountError::UnmountFailed {
+            mount_point: "/mnt/usb".to_string(),
+            reason: "Device busy".to_string(),
+        };
+        let msg = format!("{}", err);
+        assert!(msg.contains("unmount"));
+        assert!(msg.contains("busy"));
+
+        let err = MountError::Busy("/mnt/usb".to_string());
+        let msg = format!("{}", err);
+        assert!(msg.contains("busy"));
+    }
+
+    #[test]
+    fn test_default_manager() {
+        // Default manager tries to read /proc/mounts which may work on Linux
+        let _manager = MountManager::default();
+        // Just ensure it doesn't panic
+    }
+
+    #[test]
+    fn test_mounts_accessor() {
+        let manager = MountManager::new();
+        let mounts = manager.mounts();
+        assert!(mounts.is_empty());
+    }
 }

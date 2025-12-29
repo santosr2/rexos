@@ -30,3 +30,4 @@ rexos-hal = { path = "../rexos-hal" }
 rexos-config = { path = "../rexos-config" }
 rexos-library = { path = "../rexos-library" }
 rexos-emulator = { path = "../rexos-emulator" }
+rexos-network = { path = "../rexos-network" }

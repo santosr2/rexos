@@ -84,7 +84,17 @@ impl GameMetadata {
 }
 
 /// Parse gamelist.xml format (EmulationStation compatible)
-#[allow(dead_code)]
+///
+/// This function parses the standard gamelist.xml format used by EmulationStation,
+/// RetroPie, and other frontends. It extracts metadata for each game entry.
+///
+/// # Arguments
+///
+/// * `xml` - The XML content as a string
+///
+/// # Returns
+///
+/// A vector of tuples containing (rom_path, metadata) for each game found
 pub fn parse_gamelist_xml(xml: &str) -> Vec<(String, GameMetadata)> {
     let mut games = Vec::new();
 
@@ -136,7 +146,6 @@ pub fn parse_gamelist_xml(xml: &str) -> Vec<(String, GameMetadata)> {
 }
 
 /// Extract value from simple XML tag
-#[allow(dead_code)]
 fn extract_xml_value(line: &str, tag: &str) -> Option<String> {
     let open_tag = format!("<{}>", tag);
     let close_tag = format!("</{}>", tag);

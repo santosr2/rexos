@@ -319,4 +319,100 @@ mod tests {
         let config = LaunchConfig::for_rom("/roms/gba/test.gba");
         assert_eq!(config.system, Some(GameSystem::GameBoyAdvance));
     }
+
+    #[test]
+    fn test_launch_config_default() {
+        let config = LaunchConfig::default();
+        assert!(config.rom_path.as_os_str().is_empty());
+        assert!(config.system.is_none());
+        assert!(config.core.is_none());
+        assert!(!config.use_32bit);
+        assert!(config.config_path.is_none());
+        assert!(config.load_state.is_none());
+        assert!(!config.verbose);
+        assert!(config.extra_args.is_empty());
+    }
+
+    #[test]
+    fn test_launch_config_use_32bit() {
+        let config = LaunchConfig::for_rom("/roms/nes/test.nes").use_32bit();
+        assert!(config.use_32bit);
+    }
+
+    #[test]
+    fn test_launch_config_with_system() {
+        let config =
+            LaunchConfig::for_rom("/roms/unknown/test.bin").with_system(GameSystem::Genesis);
+        assert_eq!(config.system, Some(GameSystem::Genesis));
+    }
+
+    #[test]
+    fn test_emulator_launcher_default() {
+        let launcher = EmulatorLauncher::default();
+        assert_eq!(launcher.retroarch64, PathBuf::from("/usr/bin/retroarch"));
+        assert_eq!(launcher.retroarch32, PathBuf::from("/usr/bin/retroarch32"));
+        assert_eq!(launcher.cores64_dir, PathBuf::from("/usr/lib/libretro"));
+        assert_eq!(launcher.cores32_dir, PathBuf::from("/usr/lib/libretro32"));
+    }
+
+    #[test]
+    fn test_emulator_launcher_with_paths() {
+        let launcher = EmulatorLauncher::with_paths(
+            "/custom/retroarch",
+            "/custom/retroarch32",
+            "/custom/cores64",
+            "/custom/cores32",
+        );
+        assert_eq!(launcher.retroarch64, PathBuf::from("/custom/retroarch"));
+        assert_eq!(launcher.cores64_dir, PathBuf::from("/custom/cores64"));
+    }
+
+    #[test]
+    fn test_system_detection_snes() {
+        let config = LaunchConfig::for_rom("/roms/snes/game.sfc");
+        assert_eq!(config.system, Some(GameSystem::Snes));
+
+        let config2 = LaunchConfig::for_rom("/roms/snes/game.smc");
+        assert_eq!(config2.system, Some(GameSystem::Snes));
+    }
+
+    #[test]
+    fn test_system_detection_nes() {
+        let config = LaunchConfig::for_rom("/roms/nes/game.nes");
+        assert_eq!(config.system, Some(GameSystem::Nes));
+    }
+
+    #[test]
+    fn test_system_detection_unknown() {
+        let config = LaunchConfig::for_rom("/roms/unknown/game.xyz");
+        assert!(config.system.is_none());
+    }
+
+    #[test]
+    fn test_has_core_nonexistent() {
+        let launcher = EmulatorLauncher::new();
+        // Non-existent core paths will return false
+        assert!(!launcher.has_core("nonexistent_core", false));
+        assert!(!launcher.has_core("nonexistent_core", true));
+    }
+
+    #[test]
+    fn test_list_cores_nonexistent_dir() {
+        let launcher = EmulatorLauncher::with_paths(
+            "/nonexistent/retroarch",
+            "/nonexistent/retroarch32",
+            "/nonexistent/cores64",
+            "/nonexistent/cores32",
+        );
+        let cores = launcher.list_cores(false);
+        assert!(cores.is_empty());
+    }
+
+    #[test]
+    fn test_launch_rom_not_found() {
+        let launcher = EmulatorLauncher::new();
+        let config = LaunchConfig::for_rom("/nonexistent/game.gba");
+        let result = launcher.launch(config);
+        assert!(result.is_err());
+    }
 }

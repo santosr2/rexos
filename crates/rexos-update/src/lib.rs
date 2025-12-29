@@ -24,7 +24,7 @@ pub use checker::{UpdateChannel, UpdateChecker, UpdateInfo};
 pub use downloader::{DownloadProgress, DownloadState, UpdateDownloader};
 pub use installer::{InstallProgress, InstallResult, UpdateInstaller};
 pub use manifest::{FileEntry, ReleaseNotes, UpdateManifest};
-pub use verification::{SignatureVerifier, VerificationError};
+pub use verification::{CertificateVerifier, HashVerifier, SignatureVerifier, VerificationError};
 
 #[derive(Debug, Error)]
 pub enum UpdateError {
@@ -142,13 +142,29 @@ impl UpdateManager {
     }
 
     /// Verify a downloaded update
+    ///
+    /// Performs two-stage verification:
+    /// 1. SHA256 hash verification to ensure file integrity
+    /// 2. Ed25519 signature verification to ensure authenticity
     pub fn verify(&self, path: &Path, update: &UpdateInfo) -> Result<(), UpdateError> {
+        // First, verify the SHA256 hash for integrity
+        HashVerifier::verify_file(path, &update.sha256).map_err(|e| {
+            UpdateError::VerificationFailed(format!("Hash verification failed: {}", e))
+        })?;
+
+        tracing::debug!("Hash verification passed for {}", path.display());
+
+        // Then verify the Ed25519 signature for authenticity
         let verifier = SignatureVerifier::from_hex(&self.config.public_key)
             .map_err(|e| UpdateError::VerificationFailed(e.to_string()))?;
 
-        verifier
-            .verify_file(path, &update.signature)
-            .map_err(|e| UpdateError::VerificationFailed(e.to_string()))
+        verifier.verify_file(path, &update.signature).map_err(|e| {
+            UpdateError::VerificationFailed(format!("Signature verification failed: {}", e))
+        })?;
+
+        tracing::debug!("Signature verification passed for {}", path.display());
+
+        Ok(())
     }
 
     /// Install a verified update

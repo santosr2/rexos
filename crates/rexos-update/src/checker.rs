@@ -253,4 +253,75 @@ mod tests {
         assert_eq!(UpdateChannel::Beta.as_str(), "beta");
         assert_eq!(UpdateChannel::Nightly.as_str(), "nightly");
     }
+
+    #[test]
+    fn test_channel_default() {
+        let channel = UpdateChannel::default();
+        assert_eq!(channel, UpdateChannel::Stable);
+    }
+
+    #[test]
+    fn test_update_info_struct() {
+        let info = UpdateInfo {
+            version: "1.2.3".to_string(),
+            channel: UpdateChannel::Stable,
+            download_url: "https://example.com/update.tar.gz".to_string(),
+            size: 1024 * 1024 * 50, // 50MB
+            sha256: "abc123".to_string(),
+            signature: "def456".to_string(),
+            release_notes: Some("Bug fixes and improvements".to_string()),
+            release_date: "2024-01-15".to_string(),
+            critical: false,
+            min_version: None,
+            manifest_url: Some("https://example.com/manifest.json".to_string()),
+        };
+
+        assert_eq!(info.version, "1.2.3");
+        assert_eq!(info.channel, UpdateChannel::Stable);
+        assert!(!info.critical);
+        assert!(info.release_notes.is_some());
+    }
+
+    #[test]
+    fn test_update_info_critical() {
+        let info = UpdateInfo {
+            version: "1.2.4".to_string(),
+            channel: UpdateChannel::Stable,
+            download_url: "https://example.com/security-update.tar.gz".to_string(),
+            size: 1024 * 1024 * 10,
+            sha256: "xyz789".to_string(),
+            signature: "sig123".to_string(),
+            release_notes: Some("Critical security update".to_string()),
+            release_date: "2024-01-20".to_string(),
+            critical: true,
+            min_version: Some("1.2.0".to_string()),
+            manifest_url: None,
+        };
+
+        assert!(info.critical);
+        assert_eq!(info.min_version, Some("1.2.0".to_string()));
+        assert!(info.manifest_url.is_none());
+    }
+
+    #[test]
+    fn test_version_prerelease() {
+        // Pre-release versions should be compared correctly
+        assert!(UpdateChecker::is_newer("1.0.0", "1.0.0-beta"));
+        assert!(UpdateChecker::is_newer("1.0.0-beta.2", "1.0.0-beta.1"));
+    }
+
+    #[test]
+    fn test_version_major_jump() {
+        assert!(UpdateChecker::is_newer("10.0.0", "9.99.99"));
+        assert!(UpdateChecker::is_newer("100.0.0", "99.99.99"));
+    }
+
+    #[test]
+    fn test_update_checker_creation() {
+        let checker =
+            UpdateChecker::new("https://updates.rexos.io".to_string(), UpdateChannel::Beta);
+        // Just verify it creates without panicking
+        // Actual HTTP tests would require mocking
+        let _ = checker;
+    }
 }

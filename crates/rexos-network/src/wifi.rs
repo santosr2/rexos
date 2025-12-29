@@ -1,7 +1,7 @@
 //! WiFi management using wpa_supplicant
 
 use crate::NetworkError;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// WiFi network information
@@ -89,9 +89,9 @@ pub struct WifiStatus {
 /// Manages WiFi connections
 pub struct WifiManager {
     interface: String,
-    #[allow(dead_code)]
+    /// Path to wpa_supplicant control socket
     wpa_socket: PathBuf,
-    #[allow(dead_code)]
+    /// Path to wpa_supplicant configuration file
     wpa_config: PathBuf,
     available: bool,
 }
@@ -368,6 +368,13 @@ impl WifiManager {
     fn wpa_cli(&self, args: &[&str]) -> Result<String, NetworkError> {
         let mut cmd = Command::new("wpa_cli");
         cmd.arg("-i").arg(&self.interface);
+
+        // Use custom socket path if it exists
+        if self.wpa_socket.exists() {
+            cmd.arg("-p")
+                .arg(self.wpa_socket.to_string_lossy().as_ref());
+        }
+
         cmd.args(args);
 
         let output = cmd.output()?;
@@ -378,6 +385,16 @@ impl WifiManager {
             let stderr = String::from_utf8_lossy(&output.stderr);
             Err(NetworkError::CommandFailed(stderr.to_string()))
         }
+    }
+
+    /// Get the path to the wpa_supplicant configuration file
+    pub fn config_path(&self) -> &Path {
+        &self.wpa_config
+    }
+
+    /// Get the path to the wpa_supplicant control socket
+    pub fn socket_path(&self) -> &Path {
+        &self.wpa_socket
     }
 
     /// Run generic command

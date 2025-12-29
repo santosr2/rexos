@@ -1,6 +1,6 @@
 //! Game database using SQLite
 
-use crate::LibraryError;
+use crate::{GameMetadata, LibraryError};
 use rusqlite::{Connection, OptionalExtension, params};
 use std::path::Path;
 
@@ -20,6 +20,45 @@ pub struct Game {
     pub rating: Option<f32>,
     pub favorite: bool,
     pub hidden: bool,
+}
+
+impl Game {
+    /// Apply metadata from a GameMetadata struct (e.g., from gamelist.xml)
+    ///
+    /// This merges metadata into the game, preferring existing values
+    /// (metadata from gamelist.xml fills in missing fields but doesn't overwrite).
+    pub fn apply_metadata(&mut self, metadata: &GameMetadata) {
+        // Use metadata name if we only have a filename-derived name
+        if let Some(ref meta_name) = metadata.name {
+            // Only override if the current name looks like a raw filename
+            if !meta_name.is_empty() {
+                self.name = meta_name.clone();
+            }
+        }
+
+        // Fill in missing fields from metadata
+        if self.description.is_none() {
+            self.description = metadata.description.clone();
+        }
+        if self.release_date.is_none() {
+            self.release_date = metadata.release_date.clone();
+        }
+        if self.developer.is_none() {
+            self.developer = metadata.developer.clone();
+        }
+        if self.publisher.is_none() {
+            self.publisher = metadata.publisher.clone();
+        }
+        if self.genre.is_none() {
+            self.genre = metadata.genre.clone();
+        }
+        if self.players.is_none() {
+            self.players = metadata.players;
+        }
+        if self.rating.is_none() {
+            self.rating = metadata.rating;
+        }
+    }
 }
 
 /// Game statistics

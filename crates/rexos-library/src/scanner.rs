@@ -1,7 +1,8 @@
 //! ROM scanning functionality
 
-use crate::{Game, LibraryError};
-use std::collections::HashSet;
+use crate::metadata::parse_gamelist_xml;
+use crate::{Game, GameMetadata, LibraryError};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -84,10 +85,51 @@ impl RomScanner {
     }
 
     /// Scan a directory for ROMs
+    ///
+    /// This method scans the given directory for ROM files and also loads
+    /// metadata from any gamelist.xml files found (EmulationStation compatible).
     pub fn scan(&self, path: &Path, system: &str) -> Result<Vec<Game>, LibraryError> {
         let mut games = Vec::new();
-        self.scan_dir(path, system, &mut games)?;
+
+        // First, load any existing gamelist.xml metadata
+        let metadata_map = self.load_gamelist_metadata(path);
+
+        // Then scan for ROMs
+        self.scan_dir(path, system, &mut games, &metadata_map)?;
         Ok(games)
+    }
+
+    /// Load metadata from gamelist.xml if it exists in the directory
+    fn load_gamelist_metadata(&self, path: &Path) -> HashMap<String, GameMetadata> {
+        let gamelist_path = path.join("gamelist.xml");
+        let mut metadata_map = HashMap::new();
+
+        if gamelist_path.exists()
+            && let Ok(xml_content) = fs::read_to_string(&gamelist_path)
+        {
+            tracing::debug!("Loading metadata from {}", gamelist_path.display());
+
+            let entries = parse_gamelist_xml(&xml_content);
+            for (rom_path, metadata) in entries {
+                // Normalize the path - gamelist.xml typically uses relative paths like "./game.gba"
+                let normalized = rom_path
+                    .trim_start_matches("./")
+                    .trim_start_matches('/')
+                    .to_string();
+
+                // Store by filename for matching
+                if let Some(filename) = Path::new(&normalized).file_name() {
+                    metadata_map.insert(filename.to_string_lossy().to_string(), metadata);
+                }
+            }
+
+            tracing::info!(
+                "Loaded metadata for {} games from gamelist.xml",
+                metadata_map.len()
+            );
+        }
+
+        metadata_map
     }
 
     /// Recursively scan a directory
@@ -96,6 +138,7 @@ impl RomScanner {
         path: &Path,
         system: &str,
         games: &mut Vec<Game>,
+        metadata_map: &HashMap<String, GameMetadata>,
     ) -> Result<(), LibraryError> {
         if !path.exists() || !path.is_dir() {
             return Ok(());
@@ -119,14 +162,18 @@ impl RomScanner {
 
                 // Recurse into subdirectories
                 if self.config.recursive {
-                    self.scan_dir(&entry_path, system, games)?;
+                    self.scan_dir(&entry_path, system, games, metadata_map)?;
                 }
             } else if entry_path.is_file() {
                 // Check extension
                 if let Some(ext) = entry_path.extension().and_then(|e| e.to_str())
                     && self.config.extensions.contains(&ext.to_lowercase())
-                    && let Some(game) = self.create_game(&entry_path, system)
+                    && let Some(mut game) = self.create_game(&entry_path, system)
                 {
+                    // Apply metadata from gamelist.xml if available
+                    if let Some(metadata) = metadata_map.get(&name) {
+                        game.apply_metadata(metadata);
+                    }
                     games.push(game);
                 }
             }
