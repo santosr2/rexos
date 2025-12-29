@@ -77,21 +77,9 @@ repos:
         types_or: [c, c++]
         args: ['--style=file', '--fallback-style=Google']
 
-  # C/C++ linting with cppcheck
-  - repo: local
-    hooks:
-      - id: cppcheck
-        name: cppcheck
-        entry: cppcheck
-        language: system
-        types_or: [c, c++]
-        args:
-          - '--enable=warning,style,performance,portability'
-          - '--suppress=missingIncludeSystem'
-          - '--error-exitcode=1'
-          - '--inline-suppr'
-          - '-I'
-          - 'c/emulator-bridge'
+  # NOTE: cppcheck removed - not easily portable across systems
+  # Use 'brew install cppcheck' or 'apt install cppcheck' for local C analysis
+  # CI runs cppcheck separately in the workflow
 
   # Shell script linting
   - repo: https://github.com/shellcheck-py/shellcheck-py

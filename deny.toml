@@ -9,10 +9,6 @@ no-default-features = false
 
 [advisories]
 db-path = "~/.cargo/advisory-db"
-vulnerability = "deny"
-unmaintained = "warn"
-yanked = "deny"
-notice = "warn"
 ignore = [
     # Add ignored advisories here with comments explaining why
     # "RUSTSEC-XXXX-XXXX", # reason

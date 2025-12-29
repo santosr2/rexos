@@ -177,6 +177,7 @@ impl InputManager {
     }
 
     /// Scan for available input devices
+    #[allow(clippy::collapsible_if)] // Avoid if-let chains for MSRV 1.85 compatibility
     pub fn scan_devices(&mut self) -> Result<(), DeviceError> {
         self.devices.clear();
         self.device_files.clear();
@@ -196,14 +197,15 @@ impl InputManager {
                 continue;
             }
 
-            // Use if-let chain (Rust 2024) to reduce nesting
-            if let Ok(device) = self.probe_device(&path)
-                && device.is_gamepad
-                && let Ok(file) = File::open(&path)
-            {
-                tracing::info!("Found gamepad: {} at {}", device.name, path.display());
-                self.device_files.push(file);
-                self.devices.push(device);
+            // Probe device and check if it's a gamepad
+            if let Ok(device) = self.probe_device(&path) {
+                if device.is_gamepad {
+                    if let Ok(file) = File::open(&path) {
+                        tracing::info!("Found gamepad: {} at {}", device.name, path.display());
+                        self.device_files.push(file);
+                        self.devices.push(device);
+                    }
+                }
             }
         }
 

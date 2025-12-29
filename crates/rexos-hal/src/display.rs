@@ -100,6 +100,7 @@ impl Display {
     }
 
     /// Detect backlight device from sysfs
+    #[allow(clippy::collapsible_if)] // Avoid if-let chains for MSRV 1.85 compatibility
     fn detect_backlight(&mut self) -> Result<(), DeviceError> {
         // If specific path doesn't exist, scan for backlight devices
         if !self.backlight_path.exists() {
@@ -121,12 +122,13 @@ impl Display {
 
         // Read max brightness
         let max_brightness_path = self.backlight_path.join("max_brightness");
-        if max_brightness_path.exists()
-            && let Ok(contents) = fs::read_to_string(&max_brightness_path)
-            && let Ok(max) = contents.trim().parse::<u32>()
-        {
-            self.max_brightness = max;
-            tracing::debug!("Max brightness: {}", max);
+        if max_brightness_path.exists() {
+            if let Ok(contents) = fs::read_to_string(&max_brightness_path) {
+                if let Ok(max) = contents.trim().parse::<u32>() {
+                    self.max_brightness = max;
+                    tracing::debug!("Max brightness: {}", max);
+                }
+            }
         }
 
         Ok(())
@@ -273,6 +275,7 @@ impl Display {
     }
 
     /// Check if HDMI is connected
+    #[allow(clippy::collapsible_if)] // Avoid if-let chains for MSRV 1.85 compatibility
     pub fn is_hdmi_connected() -> bool {
         // Check common HDMI sysfs paths
         let paths = [
@@ -282,10 +285,10 @@ impl Display {
         ];
 
         for path in &paths {
-            if let Ok(contents) = fs::read_to_string(path)
-                && contents.trim() == "connected"
-            {
-                return true;
+            if let Ok(contents) = fs::read_to_string(path) {
+                if contents.trim() == "connected" {
+                    return true;
+                }
             }
         }
 

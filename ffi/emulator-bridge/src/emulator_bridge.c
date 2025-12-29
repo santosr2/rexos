@@ -362,11 +362,16 @@ rexos_error_t rexos_get_process_info(pid_t pid, rexos_process_info_t* info)
     unsigned long utime, stime, vsize;
     long rss;
 
-    fscanf(f,
-           "%*d %*s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
-           "%lu %lu %*d %*d %*d %*d %*d %*d %*u %lu %ld",
-           &state, &utime, &stime, &vsize, &rss);
+    int ret = fscanf(f,
+                     "%*d %*s %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
+                     "%lu %lu %*d %*d %*d %*d %*d %*d %*u %lu %ld",
+                     &state, &utime, &stime, &vsize, &rss);
     fclose(f);
+
+    if (ret < 5) {
+        info->state = REXOS_PROC_UNKNOWN;
+        return REXOS_OK;
+    }
 
     /* Parse state */
     switch (state) {
@@ -429,10 +434,10 @@ rexos_error_t rexos_kill(pid_t pid)
 }
 
 /* ============================================================================
- * File I/O Helpers
+ * File I/O Helpers (reserved for future use)
  * ========================================================================== */
 
-static int read_int_from_file(const char* path)
+__attribute__((unused)) static int read_int_from_file(const char* path)
 {
     FILE* f = fopen(path, "r");
     if (!f)
@@ -448,7 +453,7 @@ static int read_int_from_file(const char* path)
     return value;
 }
 
-static rexos_error_t write_int_to_file(const char* path, int value)
+__attribute__((unused)) static rexos_error_t write_int_to_file(const char* path, int value)
 {
     FILE* f = fopen(path, "w");
     if (!f) {
@@ -460,7 +465,8 @@ static rexos_error_t write_int_to_file(const char* path, int value)
     return REXOS_OK;
 }
 
-static rexos_error_t write_string_to_file(const char* path, const char* value)
+__attribute__((unused)) static rexos_error_t write_string_to_file(const char* path,
+                                                                  const char* value)
 {
     FILE* f = fopen(path, "w");
     if (!f) {

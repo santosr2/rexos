@@ -468,12 +468,13 @@ fn display_boot_error(message: &str) {
     error!("BOOT ERROR: {}", message);
 
     // Try to write to console
-    let _ = fs::write("/dev/console", format!("\n\n*** REXOS BOOT ERROR ***\n{}\n\n", message));
+    let _ = fs::write(
+        "/dev/console",
+        format!("\n\n*** REXOS BOOT ERROR ***\n{}\n\n", message),
+    );
 
     // Also try fbset text mode if available
-    let _ = Command::new("fbset")
-        .args(["-depth", "8"])
-        .output();
+    let _ = Command::new("fbset").args(["-depth", "8"]).output();
 }
 
 /// Log stage completion with timing

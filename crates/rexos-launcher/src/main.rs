@@ -99,7 +99,10 @@ enum SettingKind {
     /// Boolean toggle
     Toggle { value: bool },
     /// Selection from options
-    Select { options: Vec<&'static str>, current: usize },
+    Select {
+        options: Vec<&'static str>,
+        current: usize,
+    },
 }
 
 /// Current view/screen
@@ -142,7 +145,10 @@ impl App {
         // Initialize gamepad input (optional - may fail on dev machines)
         let input = match InputManager::new() {
             Ok(mgr) => {
-                info!("Gamepad input initialized with {} devices", mgr.devices().len());
+                info!(
+                    "Gamepad input initialized with {} devices",
+                    mgr.devices().len()
+                );
                 Some(mgr)
             }
             Err(e) => {
@@ -857,7 +863,10 @@ fn draw_game_info_view(frame: &mut Frame, area: Rect, app: &App) {
 
         if let Some(ref desc) = game.description {
             lines.push(Line::from(""));
-            lines.push(Line::from(vec![Span::styled("Description: ", ui::label_style())]));
+            lines.push(Line::from(vec![Span::styled(
+                "Description: ",
+                ui::label_style(),
+            )]));
             lines.push(Line::from(desc.as_str()));
         }
 

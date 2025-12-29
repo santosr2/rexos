@@ -214,15 +214,16 @@ impl Device {
     }
 
     /// Count online CPUs
+    #[allow(clippy::collapsible_if)] // Avoid if-let chains for MSRV 1.85 compatibility
     fn count_cpus() -> u32 {
         // Try to read from sysfs
         let online_path = "/sys/devices/system/cpu/online";
         if let Ok(contents) = fs::read_to_string(online_path) {
             // Format is like "0-3" for 4 cores
-            if let Some(range) = contents.trim().split('-').next_back()
-                && let Ok(max) = range.parse::<u32>()
-            {
-                return max + 1;
+            if let Some(range) = contents.trim().split('-').next_back() {
+                if let Ok(max) = range.parse::<u32>() {
+                    return max + 1;
+                }
             }
         }
 
@@ -246,15 +247,16 @@ impl Device {
     }
 
     /// Read total memory from /proc/meminfo
+    #[allow(clippy::collapsible_if)] // Avoid if-let chains for MSRV 1.85 compatibility
     fn read_meminfo_total() -> Result<u64, DeviceError> {
         let contents = fs::read_to_string("/proc/meminfo")?;
         for line in contents.lines() {
             if line.starts_with("MemTotal:") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.len() >= 2
-                    && let Ok(kb) = parts[1].parse::<u64>()
-                {
-                    return Ok(kb);
+                if parts.len() >= 2 {
+                    if let Ok(kb) = parts[1].parse::<u64>() {
+                        return Ok(kb);
+                    }
                 }
             }
         }
