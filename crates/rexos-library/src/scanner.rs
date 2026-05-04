@@ -104,29 +104,31 @@ impl RomScanner {
         let gamelist_path = path.join("gamelist.xml");
         let mut metadata_map = HashMap::new();
 
-        if gamelist_path.exists()
-            && let Ok(xml_content) = fs::read_to_string(&gamelist_path)
-        {
-            tracing::debug!("Loading metadata from {}", gamelist_path.display());
+        // Avoid if-let chains for MSRV 1.85 compatibility
+        #[allow(clippy::collapsible_if)]
+        if gamelist_path.exists() {
+            if let Ok(xml_content) = fs::read_to_string(&gamelist_path) {
+                tracing::debug!("Loading metadata from {}", gamelist_path.display());
 
-            let entries = parse_gamelist_xml(&xml_content);
-            for (rom_path, metadata) in entries {
-                // Normalize the path - gamelist.xml typically uses relative paths like "./game.gba"
-                let normalized = rom_path
-                    .trim_start_matches("./")
-                    .trim_start_matches('/')
-                    .to_string();
+                let entries = parse_gamelist_xml(&xml_content);
+                for (rom_path, metadata) in entries {
+                    // Normalize the path - gamelist.xml typically uses relative paths like "./game.gba"
+                    let normalized = rom_path
+                        .trim_start_matches("./")
+                        .trim_start_matches('/')
+                        .to_string();
 
-                // Store by filename for matching
-                if let Some(filename) = Path::new(&normalized).file_name() {
-                    metadata_map.insert(filename.to_string_lossy().to_string(), metadata);
+                    // Store by filename for matching
+                    if let Some(filename) = Path::new(&normalized).file_name() {
+                        metadata_map.insert(filename.to_string_lossy().to_string(), metadata);
+                    }
                 }
-            }
 
-            tracing::info!(
-                "Loaded metadata for {} games from gamelist.xml",
-                metadata_map.len()
-            );
+                tracing::info!(
+                    "Loaded metadata for {} games from gamelist.xml",
+                    metadata_map.len()
+                );
+            }
         }
 
         metadata_map
@@ -165,16 +167,18 @@ impl RomScanner {
                     self.scan_dir(&entry_path, system, games, metadata_map)?;
                 }
             } else if entry_path.is_file() {
-                // Check extension
-                if let Some(ext) = entry_path.extension().and_then(|e| e.to_str())
-                    && self.config.extensions.contains(&ext.to_lowercase())
-                    && let Some(mut game) = self.create_game(&entry_path, system)
-                {
-                    // Apply metadata from gamelist.xml if available
-                    if let Some(metadata) = metadata_map.get(&name) {
-                        game.apply_metadata(metadata);
+                // Check extension - avoid if-let chains for MSRV 1.85 compatibility
+                #[allow(clippy::collapsible_if)]
+                if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
+                    if self.config.extensions.contains(&ext.to_lowercase()) {
+                        if let Some(mut game) = self.create_game(&entry_path, system) {
+                            // Apply metadata from gamelist.xml if available
+                            if let Some(metadata) = metadata_map.get(&name) {
+                                game.apply_metadata(metadata);
+                            }
+                            games.push(game);
+                        }
                     }
-                    games.push(game);
                 }
             }
         }

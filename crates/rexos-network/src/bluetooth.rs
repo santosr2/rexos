@@ -248,15 +248,18 @@ impl BluetoothManager {
             } else if line.starts_with("Trusted:") {
                 device.trusted = line.contains("yes");
             } else if line.starts_with("Class:") {
-                if let Some(class_str) = line.split_whitespace().next_back()
-                    && let Ok(class) = u32::from_str_radix(class_str.trim_start_matches("0x"), 16)
-                {
-                    device.device_type = BluetoothDeviceType::from_class(class);
+                // Avoid if-let chains for MSRV 1.85 compatibility
+                #[allow(clippy::collapsible_if)]
+                if let Some(class_str) = line.split_whitespace().next_back() {
+                    if let Ok(class) = u32::from_str_radix(class_str.trim_start_matches("0x"), 16) {
+                        device.device_type = BluetoothDeviceType::from_class(class);
+                    }
                 }
-            } else if line.starts_with("RSSI:")
-                && let Some(rssi_str) = line.split_whitespace().next_back()
-            {
-                device.rssi = rssi_str.parse().ok();
+            } else if line.starts_with("RSSI:") {
+                #[allow(clippy::collapsible_if)]
+                if let Some(rssi_str) = line.split_whitespace().next_back() {
+                    device.rssi = rssi_str.parse().ok();
+                }
             }
         }
 

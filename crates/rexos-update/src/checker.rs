@@ -155,12 +155,16 @@ impl UpdateChecker {
                 .send()
                 .await;
 
-            if let Ok(resp) = response
-                && resp.status().is_success()
-                && let Ok(update) = resp.json::<UpdateInfo>().await
-                && Self::is_newer(&update.version, current_version)
-            {
-                updates.push(update);
+            // Avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if let Ok(resp) = response {
+                if resp.status().is_success() {
+                    if let Ok(update) = resp.json::<UpdateInfo>().await {
+                        if Self::is_newer(&update.version, current_version) {
+                            updates.push(update);
+                        }
+                    }
+                }
             }
         }
 

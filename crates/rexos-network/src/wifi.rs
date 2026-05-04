@@ -424,12 +424,15 @@ impl WifiManager {
             .ok()?;
 
         for line in output.lines() {
-            if line.contains("signal:")
-                && let Some(signal_str) = line.split_whitespace().nth(1)
-                && let Ok(signal) = signal_str.parse::<i32>()
-            {
-                // Convert dBm to percentage
-                return Some(((signal + 100) * 2).clamp(0, 100));
+            // Avoid if-let chains for MSRV 1.85 compatibility
+            #[allow(clippy::collapsible_if)]
+            if line.contains("signal:") {
+                if let Some(signal_str) = line.split_whitespace().nth(1) {
+                    if let Ok(signal) = signal_str.parse::<i32>() {
+                        // Convert dBm to percentage
+                        return Some(((signal + 100) * 2).clamp(0, 100));
+                    }
+                }
             }
         }
 
